@@ -1,36 +1,113 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AFCR Seguridad — E-commerce de Cámaras de Seguridad
 
-## Getting Started
+Tienda online especializada en sistemas de videovigilancia y seguridad electrónica.
 
-First, run the development server:
+## Stack Tecnológico
+
+- **Frontend**: Next.js 14+ App Router + TypeScript
+- **Estilos**: Tailwind CSS v4
+- **Base de datos**: Supabase (PostgreSQL)
+- **Auth**: Supabase Auth (email/password + Google OAuth)
+- **Storage**: Supabase Storage (imágenes de productos)
+- **Estado global**: Zustand (carrito)
+- **Pagos**: MercadoPago / Stripe (preparado)
+
+## Inicio Rápido
+
+### 1. Instalar dependencias
+
+```bash
+npm install
+```
+
+### 2. Configurar variables de entorno
+
+```bash
+cp .env.example .env.local
+# Editar .env.local con tus credenciales de Supabase
+```
+
+### 3. Configurar Supabase
+
+1. Crear proyecto en [supabase.com](https://supabase.com)
+2. Ir a **SQL Editor** y ejecutar:
+   ```sql
+   -- supabase/migrations/001_initial_schema.sql
+   ```
+3. Ejecutar datos de ejemplo:
+   ```sql
+   -- supabase/seed.sql
+   ```
+4. Copiar las credenciales a `.env.local`
+
+### 4. Ejecutar en desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura del Proyecto
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── admin/              # Panel administrativo (solo admins)
+│   ├── api/                # API Route Handlers
+│   ├── carrito/            # Página de carrito
+│   ├── categorias/[slug]/  # Páginas por categoría
+│   ├── checkout/           # Proceso de compra
+│   ├── cuenta/             # Cuenta del usuario
+│   ├── login/              # Autenticación
+│   ├── marcas/[slug]/      # Páginas por marca
+│   ├── productos/          # Catálogo y detalle
+│   └── registro/           # Registro de usuarios
+├── components/
+│   ├── admin/              # Componentes del panel admin
+│   ├── cart/               # Carrito (drawer + items)
+│   ├── checkout/           # Stepper de checkout
+│   ├── filters/            # Filtros del catálogo
+│   ├── layout/             # Header + Footer
+│   ├── products/           # Tarjetas, grid, galería, specs
+│   └── ui/                 # Componentes base
+├── lib/
+│   ├── mock-data.ts        # Datos de ejemplo (fallback sin Supabase)
+│   ├── supabase/           # Clientes (browser/server/middleware)
+│   └── utils.ts            # Utilidades
+├── store/
+│   └── cart.ts             # Estado del carrito (Zustand)
+├── types/
+│   └── index.ts            # Interfaces TypeScript
+└── middleware.ts            # Protección de rutas
+```
 
-## Learn More
+## Configurar Panel Admin
 
-To learn more about Next.js, take a look at the following resources:
+1. Crear una cuenta en la tienda
+2. En Supabase Table Editor → profiles → cambiar `role` a `admin`
+3. Acceder a `/admin`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Variables de Entorno
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Descripción |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clave anónima pública |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clave de servicio (solo servidor) |
+| `MERCADOPAGO_ACCESS_TOKEN` | Token de acceso MercadoPago |
+| `NEXT_PUBLIC_APP_URL` | URL base de la aplicación |
 
-## Deploy on Vercel
+## Funcionamiento Sin Supabase
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+La app usa datos mock automáticamente cuando Supabase no está configurado:
+- Productos, categorías y marcas se cargan desde `src/lib/mock-data.ts`
+- El carrito funciona con localStorage
+- Las rutas protegidas redirigen al login
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Build de Producción
+
+```bash
+npm run build
+npm start
+```
