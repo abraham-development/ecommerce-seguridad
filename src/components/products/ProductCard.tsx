@@ -15,9 +15,10 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { addItem, openCart } = useCartStore();
 
+  const label = product.name.slice(0, 10);
   const imageUrl =
     product.images?.[0] ||
-    `https://via.placeholder.com/400x300/1E293B/2563EB?text=${encodeURIComponent(product.name.slice(0, 10))}`;
+    `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="#1E293B"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#2563EB">${label}</text></svg>`)}`;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -14,9 +14,10 @@ export default function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCartStore();
   const { product, quantity } = item;
 
+  const label = product.name[0];
   const imageUrl =
     product.images?.[0] ||
-    `https://via.placeholder.com/80x80/1E293B/2563EB?text=${encodeURIComponent(product.name[0])}`;
+    `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#1E293B"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#2563EB">${label}</text></svg>`)}`;
 
   return (
     <li className="flex gap-3 bg-[#0F172A] rounded-xl p-3">

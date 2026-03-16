@@ -16,11 +16,12 @@ export default function ProductGallery({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [zoomed, setZoomed] = useState(false);
 
+  const label = productName.slice(0, 15);
   const displayImages =
     images.length > 0
       ? images
       : [
-          `https://via.placeholder.com/600x450/1E293B/2563EB?text=${encodeURIComponent(productName.slice(0, 15))}`,
+          `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450"><rect width="600" height="450" fill="#1E293B"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#2563EB">${label}</text></svg>`)}`,
         ];
 
   const current = displayImages[selectedIndex];

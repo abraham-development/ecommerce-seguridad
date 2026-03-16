@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, ShoppingCart } from "lucide-react";
@@ -16,6 +17,8 @@ export default function Header() {
   const pathname = usePathname();
   const { totalItems } = useCartStore();
   const itemCount = totalItems();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -71,7 +74,7 @@ export default function Header() {
                   <>
                     <ShoppingCart className="h-4 w-4" />
                     <span>Carrito</span>
-                    {itemCount > 0 && (
+                    {mounted && itemCount > 0 && (
                       <span className="h-5 min-w-5 px-1 bg-[#F97316] text-white text-xs font-bold rounded-full flex items-center justify-center">
                         {itemCount > 9 ? "9+" : itemCount}
                       </span>
