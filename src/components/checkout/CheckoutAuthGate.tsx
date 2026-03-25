@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Shield, Mail, Lock, User, ArrowRight, ShoppingBag, CheckCircle } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import Input from "@/components/ui/Input";
-import Button from "@/components/ui/Button";
+import { Shield, ShoppingBag, CheckCircle } from "lucide-react";
+import LoginForm from "@/components/checkout/LoginForm";
+import RegisterForm from "@/components/checkout/RegisterForm";
 import { useCartStore } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
-import toast from "react-hot-toast";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 type Tab = "login" | "registro";
@@ -21,64 +19,6 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
   const { items, totalPrice } = useCartStore();
   const total = totalPrice();
   const itemCount = items.reduce((s, i) => s + i.quantity, 0);
-
-  const [loginForm, setLoginForm] = useState({ email: "", password: "" });
-  const [loginLoading, setLoginLoading] = useState(false);
-
-  const [regForm, setRegForm] = useState({
-    full_name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [regLoading, setRegLoading] = useState(false);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginLoading(true);
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginForm.email,
-      password: loginForm.password,
-    });
-    if (error) {
-      toast.error(
-        error.message === "Invalid login credentials"
-          ? "Credenciales incorrectas"
-          : error.message
-      );
-      setLoginLoading(false);
-      return;
-    }
-    toast.success("¡Bienvenido de vuelta!");
-    if (data.user) onSuccess(data.user);
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (regForm.password !== regForm.confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
-      return;
-    }
-    if (regForm.password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
-      return;
-    }
-    setRegLoading(true);
-    const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({
-      email: regForm.email,
-      password: regForm.password,
-      options: { data: { full_name: regForm.full_name } },
-    });
-    if (error) {
-      toast.error(error.message);
-      setRegLoading(false);
-      return;
-    }
-    toast.success("¡Cuenta creada! Continuando con tu compra...");
-    if (data.user) onSuccess(data.user);
-  };
 
   return (
     <div className="min-h-screen bg-[#0F172A]">
@@ -148,103 +88,15 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
 
             <div className="bg-[#1E293B] rounded-2xl p-7 border border-slate-700">
               {tab === "login" ? (
-                <form onSubmit={handleLogin} className="space-y-5">
-                  <Input
-                    label="Email"
-                    type="email"
-                    id="login-email"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                    leftIcon={<Mail className="h-4 w-4" />}
-                    placeholder="tu@email.com"
-                    required
-                    autoComplete="email"
-                  />
-                  <Input
-                    label="Contraseña"
-                    type="password"
-                    id="login-password"
-                    value={loginForm.password}
-                    onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                    leftIcon={<Lock className="h-4 w-4" />}
-                    placeholder="••••••••"
-                    required
-                    autoComplete="current-password"
-                  />
-                  <Button type="submit" loading={loginLoading} className="w-full" size="lg">
-                    Ingresar y continuar
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <p className="text-center text-xs text-slate-500">
-                    ¿No tenés cuenta?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setTab("registro")}
-                      className="text-[#2563EB] hover:underline font-medium"
-                    >
-                      Registrate gratis
-                    </button>
-                  </p>
-                </form>
+                <LoginForm
+                  onSuccess={onSuccess}
+                  onSwitchToRegister={() => setTab("registro")}
+                />
               ) : (
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <Input
-                    label="Nombre completo"
-                    type="text"
-                    id="reg-name"
-                    value={regForm.full_name}
-                    onChange={(e) => setRegForm({ ...regForm, full_name: e.target.value })}
-                    leftIcon={<User className="h-4 w-4" />}
-                    placeholder="Juan Pérez"
-                    required
-                  />
-                  <Input
-                    label="Email"
-                    type="email"
-                    id="reg-email"
-                    value={regForm.email}
-                    onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                    leftIcon={<Mail className="h-4 w-4" />}
-                    placeholder="tu@email.com"
-                    required
-                  />
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label="Contraseña"
-                      type="password"
-                      id="reg-password"
-                      value={regForm.password}
-                      onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
-                      leftIcon={<Lock className="h-4 w-4" />}
-                      placeholder="Mínimo 6 caracteres"
-                      required
-                    />
-                    <Input
-                      label="Confirmar contraseña"
-                      type="password"
-                      id="reg-confirm"
-                      value={regForm.confirmPassword}
-                      onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
-                      leftIcon={<Lock className="h-4 w-4" />}
-                      placeholder="Repetí tu contraseña"
-                      required
-                    />
-                  </div>
-                  <Button type="submit" loading={regLoading} className="w-full" size="lg">
-                    Crear cuenta y continuar
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                  <p className="text-center text-xs text-slate-500">
-                    ¿Ya tenés cuenta?{" "}
-                    <button
-                      type="button"
-                      onClick={() => setTab("login")}
-                      className="text-[#2563EB] hover:underline font-medium"
-                    >
-                      Iniciá sesión
-                    </button>
-                  </p>
-                </form>
+                <RegisterForm
+                  onSuccess={onSuccess}
+                  onSwitchToLogin={() => setTab("login")}
+                />
               )}
             </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image from "next/image";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cart";
@@ -10,7 +11,7 @@ interface CartItemProps {
   item: CartItemLocal;
 }
 
-export default function CartItem({ item }: CartItemProps) {
+function CartItem({ item }: CartItemProps) {
   const { updateQuantity, removeItem } = useCartStore();
   const { product, quantity } = item;
 
@@ -76,3 +77,5 @@ export default function CartItem({ item }: CartItemProps) {
     </li>
   );
 }
+
+export default memo(CartItem);

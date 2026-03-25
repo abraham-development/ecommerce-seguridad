@@ -1,58 +1,61 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, notFound } from "next/navigation";
-import { ShoppingCart, Shield, Truck, RotateCcw } from "lucide-react";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { Shield, Truck, RotateCcw } from "lucide-react";
 import ProductGallery from "@/components/products/ProductGallery";
 import ProductSpecs from "@/components/products/ProductSpecs";
 import ProductGrid from "@/components/products/ProductGrid";
-import Button from "@/components/ui/Button";
+import AddToCartButton from "@/components/products/AddToCartButton";
 import Badge from "@/components/ui/Badge";
-import { useCartStore } from "@/store/cart";
 import { formatPrice } from "@/lib/utils";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/types";
-import toast from "react-hot-toast";
 
-export default function ProductDetailPage() {
-  const params = useParams<{ slug: string }>();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
-  const [quantity, setQuantity] = useState(1);
-  const { addItem, openCart } = useCartStore();
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
 
-  useEffect(() => {
-    // Find product in mock data
-    const found = mockProducts.find((p) => p.slug === params.slug) ?? null;
-    setProduct(found);
-    if (found) {
-      const rel = mockProducts
-        .filter(
-          (p) =>
-            p.id !== found.id &&
-            (p.category_id === found.category_id ||
-              p.brand_id === found.brand_id)
-        )
-        .slice(0, 4);
-      setRelated(rel);
-    }
-  }, [params.slug]);
-
-  if (!product) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <p className="text-slate-400">Producto no encontrado</p>
-        </div>
-      </div>
-    );
+async function getProduct(slug: string): Promise<Product | null> {
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("products")
+      .select("*, brand:brands(*), category:categories(*)")
+      .eq("slug", slug)
+      .single();
+    if (data) return data as Product;
+  } catch {
+    // Fall back to mock data
   }
+  return mockProducts.find((p) => p.slug === slug) ?? null;
+}
 
-  const handleAddToCart = () => {
-    addItem(product, quantity);
-    toast.success(`${product.name} agregado al carrito`);
-    openCart();
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = mockProducts.find((p) => p.slug === slug);
+  return {
+    title: product ? `${product.name} — AFCR Seguridad` : "Producto no encontrado",
+    description: product?.description ?? "",
+    openGraph: {
+      title: product?.name,
+      images: product?.images?.[0] ? [product.images[0]] : [],
+    },
   };
+}
+
+export default async function ProductDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const product = await getProduct(slug);
+
+  if (!product) notFound();
+
+  const related = mockProducts
+    .filter(
+      (p) =>
+        p.id !== product.id &&
+        (p.category_id === product.category_id || p.brand_id === product.brand_id)
+    )
+    .slice(0, 4);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -129,34 +132,7 @@ export default function ProductDetailPage() {
           )}
 
           {/* Quantity + Add to cart */}
-          {product.stock > 0 && (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-[#1E293B] border border-slate-700 rounded-lg">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-2 text-slate-400 hover:text-white transition-colors text-lg"
-                >
-                  −
-                </button>
-                <span className="text-white font-medium w-8 text-center">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() =>
-                    setQuantity(Math.min(product.stock, quantity + 1))
-                  }
-                  className="px-3 py-2 text-slate-400 hover:text-white transition-colors text-lg"
-                >
-                  +
-                </button>
-              </div>
-
-              <Button onClick={handleAddToCart} size="lg" className="flex-1">
-                <ShoppingCart className="h-4 w-4" />
-                Agregar al carrito
-              </Button>
-            </div>
-          )}
+          <AddToCartButton product={product} />
 
           {/* Trust badges */}
           <div className="border-t border-slate-700 pt-4 grid grid-cols-3 gap-3">

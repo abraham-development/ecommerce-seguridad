@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Shield, Camera, Zap, Award, ChevronRight } from "lucide-react";
 import ProductGrid from "@/components/products/ProductGrid";
 import { mockProducts, mockCategories } from "@/lib/mock-data";
+import { withMockFallback } from "@/lib/data-utils";
 import type { Product } from "@/types";
 
 async function getFeaturedProducts(): Promise<Product[]> {
-  try {
+  return withMockFallback(async () => {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
     const { data } = await supabase
@@ -14,11 +15,9 @@ async function getFeaturedProducts(): Promise<Product[]> {
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(8);
-    if (data && data.length > 0) return data as Product[];
-  } catch {
-    // Fall back to mock data
-  }
-  return mockProducts.slice(0, 8);
+    if (!data || data.length === 0) throw new Error("No data");
+    return data as Product[];
+  }, mockProducts.slice(0, 8));
 }
 
 export default async function HomePage() {

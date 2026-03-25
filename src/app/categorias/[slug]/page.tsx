@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductGrid from "@/components/products/ProductGrid";
 import { mockProducts, mockCategories } from "@/lib/mock-data";
@@ -18,6 +19,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
   const category = mockCategories.find((c) => c.slug === slug);
+  if (!category) notFound();
   const products = mockProducts.filter(
     (p) => p.category?.slug === slug || p.category_id === category?.id
   );
