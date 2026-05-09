@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shield, Camera, Zap, Award, ChevronRight } from "lucide-react";
+import { Camera, Zap, Award, ChevronRight } from "lucide-react";
 import ProductGrid from "@/components/products/ProductGrid";
 import { mockProducts, mockCategories } from "@/lib/mock-data";
 import { withMockFallback } from "@/lib/data-utils";
@@ -26,55 +26,24 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(37,99,235,0.15),_transparent_60%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(249,115,22,0.08),_transparent_60%)]" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-6">
-              <Shield className="h-6 w-6 text-[#2563EB]" />
-              <span className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider">
-                AFCR Seguridad
-              </span>
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-6">
+      <section className="bg-[#0F172A] border-b border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
               Tu hogar y negocio{" "}
               <span className="text-[#2563EB]">siempre protegidos</span>
             </h1>
-            <p className="text-lg text-slate-400 leading-relaxed mb-8 max-w-2xl">
+            <p className="text-lg text-slate-400 leading-relaxed mb-8">
               Especialistas en sistemas de videovigilancia. Cámaras IP, domo,
               PTZ, NVR/DVR y accesorios de Hikvision, Dahua, Axis, Reolink y más.
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Link
-                href="/productos"
-                className="flex items-center gap-2 px-6 py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors"
-              >
-                Ver catálogo completo
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/categorias/camaras-ip"
-                className="flex items-center gap-2 px-6 py-3 border border-slate-600 hover:border-[#2563EB] text-white font-semibold rounded-xl transition-colors"
-              >
-                Cámaras IP
-              </Link>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mt-16">
-            {[
-              { label: "Productos", value: "200+" },
-              { label: "Marcas líderes", value: "6" },
-              { label: "Clientes", value: "5,000+" },
-              { label: "Años de experiencia", value: "10+" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-3xl font-bold text-[#2563EB]">{stat.value}</p>
-                <p className="text-sm text-slate-400 mt-1">{stat.label}</p>
-              </div>
-            ))}
+            <Link
+              href="/productos"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+            >
+              Ver todos los productos
+              <ChevronRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>

@@ -36,7 +36,7 @@ export default function Header() {
             <Link href="/" className="flex items-center gap-2 flex-shrink-0">
               <Shield className="h-7 w-7 text-[#2563EB]" />
               <span className="font-bold text-white text-lg">
-                AFCR <span className="text-[#2563EB]">Seguridad</span>
+                AFCR <span className="text-[#2563EB]">Tecnologia</span>
               </span>
             </Link>
 
