@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Shield, Truck, RotateCcw } from "lucide-react";
 import ProductGallery from "@/components/products/ProductGallery";
 import ProductSpecs from "@/components/products/ProductSpecs";
@@ -61,18 +62,18 @@ export default async function ProductDetailPage({ params }: PageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
       <nav className="text-sm text-slate-400 mb-6 flex items-center gap-2">
-        <a href="/" className="hover:text-white transition-colors">Inicio</a>
+        <Link href="/" className="hover:text-white transition-colors">Inicio</Link>
         <span>/</span>
-        <a href="/productos" className="hover:text-white transition-colors">Productos</a>
+        <Link href="/productos" className="hover:text-white transition-colors">Productos</Link>
         {product.category && (
           <>
             <span>/</span>
-            <a
+            <Link
               href={`/categorias/${product.category.slug}`}
               className="hover:text-white transition-colors"
             >
               {product.category.name}
-            </a>
+            </Link>
           </>
         )}
         <span>/</span>

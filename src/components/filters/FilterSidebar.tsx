@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import type { Category, Brand } from "@/types";
-import { formatPrice } from "@/lib/utils";
 
 interface FilterSidebarProps {
   categories: Category[];

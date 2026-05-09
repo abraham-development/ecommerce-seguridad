@@ -7,8 +7,8 @@
   --color-accent: #F97316;
   --color-background: #0F172A;
   --color-foreground: #F8FAFC;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: "Courier New", Courier, monospace;
 }
 
 * {
