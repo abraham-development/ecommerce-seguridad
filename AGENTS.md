@@ -1,4 +1,4 @@
-# AGENTS.md — AFCR Seguridad
+# AGENTS.md - AFCR Seguridad
 
 Guía de referencia para el agente de IA. Leé este archivo antes de tocar cualquier archivo del proyecto.
 
@@ -9,18 +9,21 @@ Guía de referencia para el agente de IA. Leé este archivo antes de tocar cualq
 ```bash
 npm install          # Instalar dependencias
 npm run dev          # Servidor de desarrollo (http://localhost:3000)
-npm run build        # Build de producción (obligatorio antes de hacer PR)
+npm run build        # Build de producción (obligatorio después de cambios significativos)
 npm run start        # Correr el build localmente
 npm run lint         # Linter ESLint
 ```
 
-> **Regla:** Siempre correr `npm run build` después de cambios significativos para verificar que TypeScript no tenga errores. El build es la fuente de verdad.
+> **Regla:** Siempre correr `npm run build` después de cambios significativos de código para verificar que TypeScript no tenga errores. El build es la fuente de verdad. Para cambios solo de documentación no hace falta.
 
 ---
 
 ## Supabase CLI
 
 ```bash
+# Descubrimiento
+supabase --help                         # Revisar comandos disponibles antes de usarlos
+
 # Autenticación
 supabase login                          # Autenticarse con cuenta Supabase
 
@@ -33,7 +36,7 @@ supabase db push                        # Aplicar migraciones pendientes al proy
 supabase migration new <nombre>         # Crear una nueva migración
 supabase db reset                       # Resetear DB local y re-aplicar migraciones + seed
 
-# Tipos TypeScript (mantener src/types/index.ts actualizado a mano por ahora)
+# Tipos TypeScript (src/types/index.ts se mantiene a mano por ahora)
 supabase gen types typescript --linked > src/types/supabase.ts
 
 # Seed
@@ -45,7 +48,7 @@ supabase stop                           # Detener instancia local
 supabase status                         # Ver URLs de servicios locales
 ```
 
-> El schema vive en `supabase/migrations/001_initial_schema.sql`. Las migraciones se nombran con prefijo numérico: `002_add_reviews.sql`, etc.
+> El schema base vive en `supabase/migrations/001_initial_schema.sql`. Ya existen migraciones incrementales `002` a `006`; no reescribir migraciones aplicadas salvo pedido explícito. Para cambios de schema/RLS, crear una nueva migración.
 
 ---
 
@@ -53,13 +56,13 @@ supabase status                         # Ver URLs de servicios locales
 
 | Tecnología | Versión | Notas |
 |---|---|---|
-| Next.js | 16.1.6 | App Router, **NO** Pages Router |
+| Next.js | 16.2.6 | App Router, **NO** Pages Router. `src/proxy.ts` reemplaza middleware clásico |
 | React | 19.2.3 | Server Components por defecto |
 | TypeScript | 5.x | strict mode activado |
 | Tailwind CSS | 4.x | Configuración vía CSS, **no** `tailwind.config.ts` |
-| Supabase JS | 2.x | `@supabase/supabase-js` + `@supabase/ssr` |
+| Supabase JS | 2.99.x | `@supabase/supabase-js` + `@supabase/ssr` |
 | Zustand | 5.x | Solo para carrito (estado del cliente) |
-| React Query | 5.x | Disponible pero sin uso actual activo |
+| react-hot-toast | 2.6.x | Notificaciones cliente desde `src/components/Providers.tsx` |
 | Lucide React | 0.577 | Única librería de íconos |
 
 ---
@@ -69,20 +72,29 @@ supabase status                         # Ver URLs de servicios locales
 ```
 src/
 ├── app/                  # Next.js App Router (páginas y API routes)
-│   ├── admin/            # Panel admin (layout sin auth guard en modo mockup)
-│   ├── api/              # Route Handlers REST
+│   ├── admin/            # Panel admin protegido por src/app/admin/layout.tsx
+│   ├── api/              # Route Handlers REST: auth, cart, orders, products, admin
+│   ├── carrito/          # Página de carrito local
+│   ├── checkout/         # Auth gate + stepper de pedido
 │   ├── cuenta/           # Área privada del usuario
+│   ├── login/registro/   # Email/password + Google OAuth
+│   ├── productos/        # Catálogo y detalle por slug
+│   ├── categorias/       # Listado por categoría
+│   ├── marcas/           # Listado por marca
 │   └── ...
 ├── components/
+│   ├── account/          # ProfileForm
 │   ├── layout/           # Header.tsx, Footer.tsx
 │   ├── ui/               # Primitivos: Button, Input, Badge, Modal, Skeleton, Spinner
-│   ├── products/         # ProductCard, ProductGrid, ProductGallery, ProductSpecs
+│   ├── products/         # ProductCard, ProductGrid, ProductGallery, ProductSpecs, AddToCartButton
 │   ├── cart/             # CartDrawer, CartItem
 │   ├── filters/          # FilterSidebar
-│   ├── admin/            # AdminTable, ProductForm
-│   └── checkout/         # CheckoutStepper
+│   ├── admin/            # AdminTable, AdminProductosTable, ProductForm
+│   └── checkout/         # CheckoutStepper, CheckoutAuthGate, LoginForm, RegisterForm
 ├── lib/
-│   ├── supabase/         # client.ts · server.ts · middleware.ts
+│   ├── auth-routing.ts   # Redirects seguros, roles y destinos post-login
+│   ├── data-utils.ts     # withMockFallback()
+│   ├── supabase/         # client.ts · server.ts · middleware.ts · env.ts · data.ts
 │   ├── mock-data.ts      # Datos demo (mockProducts, mockUser, mockOrders, etc.)
 │   └── utils.ts          # cn(), formatPrice(), generateSlug(), getOrderStatus*()
 ├── store/
@@ -91,6 +103,30 @@ src/
 │   └── index.ts          # Todas las interfaces TypeScript del dominio
 └── proxy.ts              # Middleware de Next.js 16 (reemplaza middleware.ts)
 ```
+
+### Rutas API actuales
+
+| Ruta | Métodos | Responsabilidad |
+|---|---|---|
+| `/api/auth/callback` | `GET` | Intercambia OAuth code por sesión y redirige según rol |
+| `/api/auth/role-redirect` | `GET` | Redirección post-login con validación de sesión/rol |
+| `/api/auth/signout` | `GET`, `POST` | Cierra sesión y vuelve a `/` |
+| `/api/products/search` | `GET` | Busca productos con Supabase y fallback mock |
+| `/api/cart` | `GET`, `POST` | Carrito Supabase para usuario autenticado |
+| `/api/cart/[id]` | `PATCH`, `DELETE` | Actualiza/elimina item propio del carrito |
+| `/api/orders` | `POST` | Crea orden, items y limpia carrito Supabase |
+| `/api/orders/[id]` | `GET` | Lee orden propia con items |
+| `/api/admin/products` | `POST` | Crea producto; requiere admin |
+| `/api/admin/products/[id]` | `PUT`, `DELETE` | Edita/elimina producto; requiere admin |
+
+### Flujo de datos actual
+
+- La capa central de lectura vive en `src/lib/supabase/data.ts`.
+- Productos, categorías, marcas, listados y detalle intentan leer Supabase y caen a `src/lib/mock-data.ts` si Supabase falla o no devuelve datos útiles.
+- Cuenta, admin y pedidos privados requieren sesión real con `supabase.auth.getUser()`.
+- El carrito visible usa Zustand/localStorage (`src/store/cart.ts`, key `afcr-cart`). Las APIs `/api/cart` existen para carrito persistido en Supabase.
+- Checkout verifica sesión desde el cliente; si no hay usuario muestra `CheckoutAuthGate`. Al confirmar, postea a `/api/orders`, crea orden/items y limpia el carrito local.
+- Admin se protege en `src/app/admin/layout.tsx`; `src/proxy.ts` solo refresca sesión.
 
 ---
 
@@ -102,6 +138,7 @@ src/
 - Usar `interface` para entidades de DB. Usar `type` para unions y alias.
 - Las funciones async de Server Components siempre tipan el retorno explícitamente.
 - Nunca usar `!` (non-null assertion) excepto en las env vars de Supabase (patrón establecido).
+- En rutas dinámicas de App Router/Next 16, el patrón actual usa `params: Promise<{ ... }>` y `const { id } = await params`.
 
 ### Componentes
 - **Server Components por defecto.** Solo agregar `"use client"` cuando se use: hooks de React, event handlers, `usePathname/useRouter`, Zustand, o APIs del browser.
@@ -118,6 +155,7 @@ src/
   - `#F97316` — badge de carrito, ofertas, highlights
 - Usar `cn()` de `@/lib/utils` para condicionales de clases (combina `clsx` + `tailwind-merge`).
 - No mezclar clases de Tailwind con estilos inline.
+- Hay algunos estilos inline existentes para casos puntuales; no expandir ese patrón si puede resolverse con Tailwind.
 
 ### Importaciones
 - Siempre usar el alias `@/` (configurado en `tsconfig.json` como `src/*`).
@@ -131,6 +169,7 @@ src/
 - **Constantes de datos mock:** camelCase con prefijo `mock` → `mockProducts`, `mockUser`
 - **API Routes:** los archivos se llaman `route.ts`, siempre
 - **Slugs de URL:** kebab-case, generados con `generateSlug()` de `@/lib/utils`
+- **Admin/auth routing:** centralizar destinos y rol admin en `src/lib/auth-routing.ts`
 
 ---
 
@@ -143,6 +182,8 @@ src/
 | `src/lib/supabase/client.ts` | Client Components (`"use client"`), event handlers |
 | `src/lib/supabase/server.ts` | Server Components, Route Handlers (`route.ts`) |
 | `src/lib/supabase/middleware.ts` | Solo desde `src/proxy.ts` |
+| `src/lib/supabase/env.ts` | Lectura de `NEXT_PUBLIC_SUPABASE_URL` y key pública |
+| `src/lib/supabase/data.ts` | Queries de lectura con fallback mock |
 
 ```typescript
 // Client Component
@@ -157,18 +198,22 @@ const supabase = await createClient();
 ### Seguridad con Supabase
 
 **Variables de entorno:**
-- `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` → expuestas al cliente, está bien.
+- `NEXT_PUBLIC_SUPABASE_URL` → obligatoria para clientes Supabase.
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` → key pública preferida.
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` → fallback compatible si no existe publishable key.
 - `SUPABASE_SERVICE_ROLE_KEY` → **NUNCA** usar en Client Components ni exponer al browser. Solo en Route Handlers del lado del servidor si es estrictamente necesario.
 - Nunca hardcodear credenciales en el código fuente.
 - El archivo `.env.local` está en `.gitignore` (nunca commitear).
 
 **Row Level Security (RLS):**
 - **Todas las tablas tienen RLS habilitado.** Nunca desactivarlo.
-- Las políticas están en `supabase/migrations/001_initial_schema.sql`. Cualquier nueva tabla debe incluir su política RLS en la misma migración.
+- Las políticas nacen en `supabase/migrations/001_initial_schema.sql` y fueron ajustadas en migraciones posteriores. Cualquier nueva tabla debe incluir su política RLS en la misma migración nueva.
 - Regla de oro: la anon key solo puede hacer lo que las políticas RLS permiten explícitamente.
+- Las migraciones de hardening movieron helpers admin a schema privado; no volver a introducir helpers `security definer` en schemas expuestos.
 
 **Autenticación:**
 - Usar siempre `supabase.auth.getUser()` para verificar sesión — nunca confiar en `getSession()` solo en el servidor (puede ser stale).
+- Para admin, usar `isAdminAccount()` de `src/lib/auth-routing.ts`; combina `profile.role === "admin"` con un fallback de email permitido. Si cambia la lógica admin, actualizar ese helper y revisar RLS/migraciones.
 - En Route Handlers que mutan datos, verificar usuario Y rol antes de operar:
   ```typescript
   const { data: { user } } = await supabase.auth.getUser();
@@ -178,7 +223,8 @@ const supabase = await createClient();
 
 **Proxy (middleware):**
 - El archivo es `src/proxy.ts` con export `proxy` (Next.js 16 renombró `middleware.ts` → `proxy.ts`).
-- **Modo actual: mockup** — el proxy solo refresca la sesión, no hace redirects. Cuando se active producción, restaurar los guards de `/cuenta/*` y `/admin/*`.
+- El proxy solo refresca la sesión, no hace redirects.
+- Los guards reales actuales están en `src/app/admin/layout.tsx`, páginas de `/cuenta/*` y routes de auth (`callback`, `role-redirect`).
 
 **Storage (imágenes):**
 - Bucket: `product-images` (público para lectura, escritura solo admin vía RLS).
@@ -187,22 +233,23 @@ const supabase = await createClient();
 
 ---
 
-## Modo mockup vs producción
+## Modo híbrido actual
 
-**Estado actual: modo mockup.** Toda la app funciona sin Supabase usando datos de `src/lib/mock-data.ts`.
+La app no está en mockup puro: combina Supabase real con fallback mock.
 
-Para **activar producción**:
-1. Completar `.env.local` con credenciales reales de Supabase.
-2. Ejecutar el schema SQL en Supabase: `supabase/migrations/001_initial_schema.sql`.
-3. Ejecutar el seed: `supabase/seed.sql`.
-4. Restaurar los auth guards en `src/proxy.ts`:
-   ```typescript
-   // Descomentar / restaurar:
-   if (pathname.startsWith("/cuenta") && !user) redirect("/login");
-   if (pathname.startsWith("/admin")) { /* verificar role admin */ }
-   ```
-5. Restaurar `src/app/admin/layout.tsx` con verificación de rol.
-6. Reemplazar las páginas de `/cuenta/*` para leer de Supabase en lugar de `mockUser`/`mockOrders`.
+- Catálogo público: intenta Supabase y cae a `src/lib/mock-data.ts`.
+- Autenticación: usa Supabase Auth real en login, registro, OAuth, checkout, cuenta y admin.
+- Admin: `src/app/admin/layout.tsx` exige sesión y rol admin.
+- Cuenta: `/cuenta/*` exige sesión real; algunas lecturas de pedidos tienen fallback mock si falla la query.
+- Carrito visible: localStorage/Zustand. APIs de carrito Supabase existen, pero no son la fuente principal de la UI actual.
+
+Para producción:
+1. Completar `.env.local` con `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` o `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2. Aplicar migraciones `supabase/migrations/*.sql` en orden.
+3. Ejecutar `supabase/seed.sql` si se necesitan datos demo.
+4. Confirmar que las URLs de auth/OAuth apuntan al dominio correcto.
+5. Crear/asignar admins mediante `profiles.role = 'admin'` y revisar `src/lib/auth-routing.ts`.
+6. Verificar RLS y Storage (`product-images`) antes de exponer escritura admin.
 
 ---
 
@@ -211,22 +258,28 @@ Para **activar producción**:
 ### Nuevo Server Component con datos
 ```typescript
 // app/ejemplo/page.tsx
-import { mockData } from "@/lib/mock-data";
+import { mockProducts } from "@/lib/mock-data";
+import { createClient } from "@/lib/supabase/server";
 import type { Product } from "@/types";
+import type { ReactElement } from "react";
 
 async function getData(): Promise<Product[]> {
   try {
-    const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
-    const { data } = await supabase.from("products").select("*");
+    const { data, error } = await supabase
+      .from("products")
+      .select("*, brand:brands(*), category:categories(*)")
+      .eq("is_active", true);
+
+    if (error) throw error;
     if (data && data.length > 0) return data as Product[];
   } catch {
-    // Supabase no disponible, usar mock
+    // Supabase no disponible, usar fallback mock
   }
-  return mockData;
+  return mockProducts;
 }
 
-export default async function Page() {
+export default async function Page(): Promise<ReactElement> {
   const items = await getData();
   return <div>...</div>;
 }
@@ -240,6 +293,33 @@ import { useCartStore } from "@/store/cart";
 export default function MiComponente() {
   const { addItem, totalItems } = useCartStore();
   // ...
+}
+```
+
+### Nueva API Route admin
+```typescript
+// app/api/admin/ejemplo/route.ts
+import { NextResponse } from "next/server";
+import { isAdminAccount } from "@/lib/auth-routing";
+import { createClient } from "@/lib/supabase/server";
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!isAdminAccount(profile?.role, user.email)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  return NextResponse.json(body, { status: 201 });
 }
 ```
 
@@ -268,6 +348,18 @@ export async function POST(request: Request) {
 |---|---|
 | `src/types/index.ts` | Contratos de todos los tipos — cambiar impacta toda la app |
 | `supabase/migrations/001_initial_schema.sql` | Schema de producción — nunca editar, crear nueva migración |
+| `supabase/migrations/*.sql` ya aplicadas | No reescribir historia de DB salvo pedido explícito |
 | `src/lib/supabase/server.ts` | Patrón oficial SSR de Supabase — no modificar la lógica de cookies |
+| `src/lib/supabase/middleware.ts` y `src/proxy.ts` | Manejo global de sesión — cambios pueden romper auth |
+| `src/lib/auth-routing.ts` | Decide admins y redirects — revisar seguridad antes de cambiar |
 | `src/app/globals.css` | Define los colores del design system — cambios afectan toda la UI |
 | `.env.local` | Credenciales sensibles — nunca commitear |
+
+---
+
+## Notas actuales
+
+- `README.md` tiene referencias desactualizadas (`middleware.ts`, Next 14+) frente al estado real de la app.
+- `CLAUDE.md` aparece borrado en el working tree al momento de este mapeo; no restaurarlo ni modificarlo salvo pedido explícito.
+- `next.config.ts` permite imágenes de `*.supabase.co/storage/v1/object/public/**` y `images.unsplash.com`.
+- `ProductForm` sube imágenes al bucket `product-images`; mantener rutas compatibles con Storage público.
