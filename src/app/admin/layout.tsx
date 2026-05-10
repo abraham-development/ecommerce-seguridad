@@ -2,11 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
   LayoutDashboard,
+  LogOut,
   Package,
   ShoppingBag,
   Users,
   Shield,
 } from "lucide-react";
+import { isAdminAccount } from "@/lib/auth-routing";
 import { getCurrentAccount } from "@/lib/supabase/data";
 
 const navItems = [
@@ -24,11 +26,11 @@ export default async function AdminLayout({
   const account = await getCurrentAccount();
 
   if (!account) {
-    redirect("/login?redirect=/admin");
+    redirect("/login?redirect=/admin&error=session_required");
   }
 
-  if (account.profile?.role !== "admin") {
-    redirect("/");
+  if (!isAdminAccount(account.profile?.role, account.user.email)) {
+    redirect("/login?redirect=/admin&error=admin_required");
   }
 
   return (
@@ -54,6 +56,13 @@ export default async function AdminLayout({
           ))}
         </nav>
         <div className="p-4 border-t border-slate-700">
+          <a
+            href="/api/auth/signout"
+            className="mb-3 flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Cerrar sesión
+          </a>
           <Link
             href="/"
             className="text-xs text-slate-500 hover:text-slate-300 transition-colors"

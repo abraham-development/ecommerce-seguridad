@@ -5,6 +5,7 @@ import type { Product, Category, Brand, Profile, Order, OrderItem } from "@/type
 // ========================
 export const mockUser: Profile = {
   id: "mock-user-1",
+  email: "usuario@demo.com",
   full_name: "Usuario Demo",
   phone: "+54 11 1234-5678",
   address: {
@@ -14,7 +15,7 @@ export const mockUser: Profile = {
     postal_code: "1043",
     country: "Argentina",
   },
-  role: "customer",
+  role: "user",
   created_at: "2025-06-01T00:00:00Z",
   updated_at: "2026-01-15T00:00:00Z",
 };

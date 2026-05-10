@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminAccount } from "@/lib/auth-routing";
 import { createClient } from "@/lib/supabase/server";
 import { generateSlug } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (!isAdminAccount(profile?.role, user.email)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

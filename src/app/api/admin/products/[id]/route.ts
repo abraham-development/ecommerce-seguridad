@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminAccount } from "@/lib/auth-routing";
 import { createClient } from "@/lib/supabase/server";
 import { generateSlug } from "@/lib/utils";
 
@@ -18,7 +19,9 @@ async function verifyAdmin() {
     .eq("id", user.id)
     .single();
 
-  if (profile?.role !== "admin") return { error: "Forbidden", supabase, user };
+  if (!isAdminAccount(profile?.role, user.email)) {
+    return { error: "Forbidden", supabase, user };
+  }
 
   return { error: null, supabase, user };
 }

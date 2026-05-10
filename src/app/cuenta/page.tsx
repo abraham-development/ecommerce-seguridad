@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Package, User, LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getCurrentAccount, getUserOrders } from "@/lib/supabase/data";
+import { isAdminAccount } from "@/lib/auth-routing";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 
@@ -13,6 +14,10 @@ export default async function CuentaPage() {
 
   if (!account) {
     redirect("/login?redirect=/cuenta");
+  }
+
+  if (isAdminAccount(account.profile?.role, account.user.email)) {
+    redirect("/admin");
   }
 
   const displayName =

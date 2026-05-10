@@ -7,12 +7,25 @@ import { Shield, Mail, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import {
+  getLocalSafeOrigin,
+  getSafeRedirectPath,
+  USER_DASHBOARD_PATH,
+} from "@/lib/auth-routing";
 import toast from "react-hot-toast";
+
+const loginErrors: Record<string, string> = {
+  session_required: "Necesitás iniciar sesión para acceder al panel admin.",
+  admin_required: "Tu cuenta no tiene permisos de administrador.",
+  auth_callback_failed: "No se pudo completar el inicio de sesión. Intentá de nuevo.",
+};
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/cuenta";
+  const redirect = getSafeRedirectPath(searchParams.get("redirect"));
+  const oauthRedirect = redirect ?? USER_DASHBOARD_PATH;
+  const errorMessage = loginErrors[searchParams.get("error") ?? ""];
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -36,18 +49,24 @@ export default function LoginPage() {
     }
 
     toast.success("¡Bienvenido de vuelta!");
-    router.push(redirect);
+    const params = new URLSearchParams();
+    if (redirect) params.set("next", redirect);
+    router.push(`/api/auth/role-redirect?${params}`);
     router.refresh();
   };
 
   const handleGoogleLogin = async () => {
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=${redirect}`,
+        redirectTo: `${getLocalSafeOrigin(window.location.origin)}/api/auth/callback?next=${oauthRedirect}`,
       },
     });
+
+    if (error) {
+      toast.error(error.message);
+    }
   };
 
   return (
@@ -65,6 +84,12 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-[#1E293B] rounded-2xl p-8 border border-slate-700">
+          {errorMessage ? (
+            <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+              {errorMessage}
+            </div>
+          ) : null}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"

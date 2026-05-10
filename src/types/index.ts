@@ -1,4 +1,4 @@
-export type UserRole = "customer" | "admin";
+export type UserRole = "user" | "admin";
 
 export type OrderStatus =
   | "pending"
@@ -19,6 +19,7 @@ export interface Address {
 
 export interface Profile {
   id: string;
+  email: string | null;
   full_name: string | null;
   phone: string | null;
   address: Address | null;
