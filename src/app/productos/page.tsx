@@ -2,8 +2,8 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import FilterSidebar from "@/components/filters/FilterSidebar";
 import ProductGrid from "@/components/products/ProductGrid";
-import { mockProducts, mockCategories, mockBrands } from "@/lib/mock-data";
-import type { Product, ProductFilters } from "@/types";
+import { getBrands, getCategories, getProducts } from "@/lib/supabase/data";
+import type { ProductFilters } from "@/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -12,76 +12,6 @@ export const metadata: Metadata = {
   description:
     "Explorar nuestro catálogo completo de cámaras de seguridad, NVR/DVR y accesorios.",
 };
-
-async function getProducts(filters: ProductFilters): Promise<{ products: Product[]; count: number }> {
-  try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-
-    let query = supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)", { count: "exact" })
-      .eq("is_active", true);
-
-    if (filters.search) {
-      query = query.ilike("name", `%${filters.search}%`);
-    }
-    if (filters.category) {
-      const slugs = filters.category.split(",");
-      query = query.in("category.slug", slugs);
-    }
-    if (filters.brand) {
-      const brands = filters.brand.split(",");
-      query = query.in("brand.name", brands);
-    }
-    if (filters.minPrice) query = query.gte("price", filters.minPrice);
-    if (filters.maxPrice) query = query.lte("price", filters.maxPrice);
-
-    switch (filters.sortBy) {
-      case "price_asc": query = query.order("price", { ascending: true }); break;
-      case "price_desc": query = query.order("price", { ascending: false }); break;
-      case "name_asc": query = query.order("name", { ascending: true }); break;
-      default: query = query.order("created_at", { ascending: false });
-    }
-
-    const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 12;
-    query = query.range((page - 1) * pageSize, page * pageSize - 1);
-
-    const { data, count } = await query;
-    if (data && data.length > 0) return { products: data as Product[], count: count ?? 0 };
-  } catch {
-    // Fall back to mock
-  }
-
-  let products = [...mockProducts];
-
-  if (filters.search) {
-    const q = filters.search.toLowerCase();
-    products = products.filter((p) => p.name.toLowerCase().includes(q));
-  }
-  if (filters.category) {
-    const slugs = filters.category.split(",");
-    products = products.filter((p) => p.category && slugs.includes(p.category.slug));
-  }
-  if (filters.brand) {
-    const brands = filters.brand.split(",");
-    products = products.filter((p) => p.brand && brands.includes(p.brand.name));
-  }
-  if (filters.minPrice) products = products.filter((p) => p.price >= filters.minPrice!);
-  if (filters.maxPrice) products = products.filter((p) => p.price <= filters.maxPrice!);
-
-  switch (filters.sortBy) {
-    case "price_asc": products.sort((a, b) => a.price - b.price); break;
-    case "price_desc": products.sort((a, b) => b.price - a.price); break;
-    case "name_asc": products.sort((a, b) => a.name.localeCompare(b.name)); break;
-  }
-
-  const page = filters.page ?? 1;
-  const pageSize = filters.pageSize ?? 12;
-  const start = (page - 1) * pageSize;
-  return { products: products.slice(start, start + pageSize), count: products.length };
-}
 
 interface PageProps {
   searchParams: Promise<Record<string, string>>;
@@ -100,7 +30,11 @@ export default async function ProductosPage({ searchParams }: PageProps) {
     pageSize: 12,
   };
 
-  const { products, count } = await getProducts(filters);
+  const [{ products, count }, categories, brands] = await Promise.all([
+    getProducts(filters),
+    getCategories(),
+    getBrands(),
+  ]);
   const totalPages = Math.ceil(count / (filters.pageSize ?? 12));
   const currentPage = filters.page ?? 1;
 
@@ -123,7 +57,7 @@ export default async function ProductosPage({ searchParams }: PageProps) {
 
       <div className="flex flex-col lg:flex-row gap-8">
         <Suspense>
-          <FilterSidebar categories={mockCategories} brands={mockBrands} />
+          <FilterSidebar categories={categories} brands={brands} />
         </Suspense>
 
         <div className="flex-1">

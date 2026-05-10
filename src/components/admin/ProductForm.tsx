@@ -23,6 +23,7 @@ export default function ProductForm({
 }: ProductFormProps) {
   const router = useRouter();
   const isEditing = !!product?.id;
+  const productId = product?.id;
 
   const [form, setForm] = useState({
     name: product?.name ?? "",
@@ -99,9 +100,9 @@ export default function ProductForm({
 
     try {
       const res = await fetch(
-        isEditing ? `/api/admin/products/${product!.id}` : "/api/admin/products",
+        productId ? `/api/admin/products/${productId}` : "/api/admin/products",
         {
-          method: isEditing ? "PUT" : "POST",
+          method: productId ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }

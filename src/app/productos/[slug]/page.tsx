@@ -8,32 +8,18 @@ import ProductGrid from "@/components/products/ProductGrid";
 import AddToCartButton from "@/components/products/AddToCartButton";
 import Badge from "@/components/ui/Badge";
 import { formatPrice } from "@/lib/utils";
-import { mockProducts } from "@/lib/mock-data";
-import type { Product } from "@/types";
+import {
+  getProductBySlug,
+  getRelatedProducts,
+} from "@/lib/supabase/data";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getProduct(slug: string): Promise<Product | null> {
-  try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("slug", slug)
-      .single();
-    if (data) return data as Product;
-  } catch {
-    // Fall back to mock data
-  }
-  return mockProducts.find((p) => p.slug === slug) ?? null;
-}
-
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = mockProducts.find((p) => p.slug === slug);
+  const product = await getProductBySlug(slug);
   return {
     title: product ? `${product.name} — AFCR Seguridad` : "Producto no encontrado",
     description: product?.description ?? "",
@@ -46,17 +32,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 
-  const related = mockProducts
-    .filter(
-      (p) =>
-        p.id !== product.id &&
-        (p.category_id === product.category_id || p.brand_id === product.brand_id)
-    )
-    .slice(0, 4);
+  const related = await getRelatedProducts(product);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -6,6 +7,7 @@ import {
   Users,
   Shield,
 } from "lucide-react";
+import { getCurrentAccount } from "@/lib/supabase/data";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -14,11 +16,21 @@ const navItems = [
   { href: "/admin/usuarios", label: "Usuarios", icon: Users },
 ];
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const account = await getCurrentAccount();
+
+  if (!account) {
+    redirect("/login?redirect=/admin");
+  }
+
+  if (account.profile?.role !== "admin") {
+    redirect("/");
+  }
+
   return (
     <div className="flex min-h-[calc(100vh-64px)]">
       {/* Sidebar */}

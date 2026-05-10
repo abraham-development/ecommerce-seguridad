@@ -1,27 +1,13 @@
 import Link from "next/link";
 import { Camera, Zap, Award, ChevronRight } from "lucide-react";
 import ProductGrid from "@/components/products/ProductGrid";
-import { mockProducts, mockCategories } from "@/lib/mock-data";
-import { withMockFallback } from "@/lib/data-utils";
-import type { Product } from "@/types";
-
-async function getFeaturedProducts(): Promise<Product[]> {
-  return withMockFallback(async () => {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(8);
-    if (!data || data.length === 0) throw new Error("No data");
-    return data as Product[];
-  }, mockProducts.slice(0, 8));
-}
+import { getCategories, getFeaturedProducts } from "@/lib/supabase/data";
 
 export default async function HomePage() {
-  const featuredProducts = await getFeaturedProducts();
+  const [featuredProducts, categories] = await Promise.all([
+    getFeaturedProducts(),
+    getCategories(),
+  ]);
 
   return (
     <div className="min-h-screen">
@@ -95,7 +81,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-          {mockCategories.map((cat) => (
+          {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/categorias/${cat.slug}`}

@@ -1,15 +1,25 @@
 import Link from "next/link";
-import { mockOrders } from "@/lib/mock-data";
+import { redirect } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import { getOrderStatusLabel, getOrderStatusColor, formatPrice } from "@/lib/utils";
 import { Package } from "lucide-react";
+import { getCurrentAccount, getUserOrders } from "@/lib/supabase/data";
 
-export default function PedidosPage() {
+export default async function PedidosPage() {
+  const [account, orders] = await Promise.all([
+    getCurrentAccount(),
+    getUserOrders(),
+  ]);
+
+  if (!account) {
+    redirect("/login?redirect=/cuenta/pedidos");
+  }
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-2xl font-bold text-white mb-8">Mis pedidos</h1>
 
-      {mockOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <div className="text-center py-20">
           <Package className="h-16 w-16 mx-auto mb-4 text-slate-600" />
           <p className="text-slate-300 font-medium">No tenés pedidos aún</p>
@@ -19,7 +29,7 @@ export default function PedidosPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {mockOrders.map((order) => (
+          {orders.map((order) => (
             <Link
               key={order.id}
               href={`/cuenta/pedidos/${order.id}`}

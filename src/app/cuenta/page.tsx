@@ -1,11 +1,22 @@
 import Link from "next/link";
 import { Package, User, LogOut } from "lucide-react";
-import { mockUser, mockOrders } from "@/lib/mock-data";
+import { redirect } from "next/navigation";
+import { getCurrentAccount, getUserOrders } from "@/lib/supabase/data";
 import { formatPrice, getOrderStatusLabel, getOrderStatusColor } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 
-export default function CuentaPage() {
-  const recentOrders = mockOrders.slice(0, 5);
+export default async function CuentaPage() {
+  const [account, recentOrders] = await Promise.all([
+    getCurrentAccount(),
+    getUserOrders(5),
+  ]);
+
+  if (!account) {
+    redirect("/login?redirect=/cuenta");
+  }
+
+  const displayName =
+    account.profile?.full_name ?? account.user.email ?? "Mi cuenta";
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -19,8 +30,8 @@ export default function CuentaPage() {
               <User className="h-6 w-6 text-[#2563EB]" />
             </div>
             <div>
-              <p className="font-semibold text-white">{mockUser.full_name}</p>
-              <p className="text-sm text-slate-400">demo@afcrseguridad.com</p>
+              <p className="font-semibold text-white">{displayName}</p>
+              <p className="text-sm text-slate-400">{account.user.email}</p>
             </div>
           </div>
 
@@ -37,12 +48,12 @@ export default function CuentaPage() {
             >
               <User className="h-4 w-4" /> Editar perfil
             </Link>
-            <Link
-              href="/login"
+            <a
+              href="/api/auth/signout"
               className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <LogOut className="h-4 w-4" /> Cerrar sesión
-            </Link>
+            </a>
           </div>
         </div>
 

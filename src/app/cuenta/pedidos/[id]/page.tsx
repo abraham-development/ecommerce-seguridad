@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Badge from "@/components/ui/Badge";
 import { getOrderStatusLabel, getOrderStatusColor, formatPrice } from "@/lib/utils";
 import { Package, MapPin } from "lucide-react";
-import { mockOrders, mockOrderItems, mockProducts } from "@/lib/mock-data";
+import { getUserOrder } from "@/lib/supabase/data";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -11,10 +11,10 @@ interface PageProps {
 export default async function OrderDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const order = mockOrders.find((o) => o.id === id);
+  const order = await getUserOrder(id);
   if (!order) notFound();
 
-  const items = mockOrderItems[id] ?? [];
+  const items = order.order_items ?? [];
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -44,7 +44,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
           </h2>
           <ul className="divide-y divide-slate-700">
             {items.map((item) => {
-              const product = mockProducts.find((p) => p.id === item.product_id);
+              const product = item.product;
               return (
                 <li key={item.id} className="py-3 flex items-center justify-between gap-3">
                   <div className="flex-1">

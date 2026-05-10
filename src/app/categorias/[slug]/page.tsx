@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductGrid from "@/components/products/ProductGrid";
-import { mockProducts, mockCategories } from "@/lib/mock-data";
+import {
+  getCategoryBySlug,
+  getProductsByCategorySlug,
+} from "@/lib/supabase/data";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -9,7 +12,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = mockCategories.find((c) => c.slug === slug);
+  const category = await getCategoryBySlug(slug);
   return {
     title: category ? `${category.name} — Cámaras de Seguridad` : "Categoría",
     description: category?.description ?? "",
@@ -18,11 +21,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
-  const category = mockCategories.find((c) => c.slug === slug);
+  const category = await getCategoryBySlug(slug);
   if (!category) notFound();
-  const products = mockProducts.filter(
-    (p) => p.category?.slug === slug || p.category_id === category?.id
-  );
+  const products = await getProductsByCategorySlug(slug);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

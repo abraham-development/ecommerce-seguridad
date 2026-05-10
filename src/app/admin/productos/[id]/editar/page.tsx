@@ -1,5 +1,10 @@
 import ProductForm from "@/components/admin/ProductForm";
-import { mockCategories, mockBrands, mockProducts } from "@/lib/mock-data";
+import { notFound } from "next/navigation";
+import {
+  getBrands,
+  getCategories,
+  getProductById,
+} from "@/lib/supabase/data";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -7,7 +12,13 @@ interface PageProps {
 
 export default async function EditarProductoPage({ params }: PageProps) {
   const { id } = await params;
-  const product = mockProducts.find((p) => p.id === id);
+  const [product, categories, brands] = await Promise.all([
+    getProductById(id),
+    getCategories(),
+    getBrands(),
+  ]);
+
+  if (!product) notFound();
 
   return (
     <div>
@@ -15,8 +26,8 @@ export default async function EditarProductoPage({ params }: PageProps) {
       <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700">
         <ProductForm
           product={product}
-          categories={mockCategories}
-          brands={mockBrands}
+          categories={categories}
+          brands={brands}
         />
       </div>
     </div>

@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import ProductGrid from "@/components/products/ProductGrid";
-import { mockProducts, mockBrands } from "@/lib/mock-data";
-import { generateSlug } from "@/lib/utils";
+import { getBrandBySlug, getProductsByBrandSlug } from "@/lib/supabase/data";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -10,7 +9,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const brand = mockBrands.find((b) => generateSlug(b.name) === slug);
+  const brand = await getBrandBySlug(slug);
   return {
     title: brand ? `${brand.name} — Cámaras de Seguridad` : "Marca",
   };
@@ -18,11 +17,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function BrandPage({ params }: PageProps) {
   const { slug } = await params;
-  const brand = mockBrands.find((b) => generateSlug(b.name) === slug);
+  const brand = await getBrandBySlug(slug);
   if (!brand) notFound();
-  const products = mockProducts.filter(
-    (p) => p.brand && generateSlug(p.brand.name) === slug
-  );
+  const products = await getProductsByBrandSlug(slug);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
