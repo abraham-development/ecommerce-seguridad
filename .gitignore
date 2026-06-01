@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local node.js binary
+/.node-local
+
+# local MCP configuration
+/.mcp.json

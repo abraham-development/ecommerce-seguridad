@@ -56,7 +56,6 @@ export default function FilterSidebar({
   const selectedBrands = searchParams.get("brand")?.split(",").filter(Boolean) ?? [];
   const minPrice = searchParams.get("minPrice") ?? "";
   const maxPrice = searchParams.get("maxPrice") ?? "";
-  const sortBy = searchParams.get("sortBy") ?? "";
 
   const clearAll = () => {
     router.push(pathname);
@@ -70,35 +69,16 @@ export default function FilterSidebar({
 
   return (
     <aside className="w-full lg:w-64 flex-shrink-0 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-white uppercase tracking-wider">
-          Filtros
-        </h2>
-        {hasFilters && (
+      {hasFilters && (
+        <div className="flex justify-end">
           <button
             onClick={clearAll}
             className="text-xs text-[#2563EB] hover:underline"
           >
             Limpiar todo
           </button>
-        )}
-      </div>
-
-      {/* Sort */}
-      <div>
-        <h3 className="text-sm font-medium text-slate-300 mb-3">Ordenar por</h3>
-        <select
-          value={sortBy}
-          onChange={(e) => updateFilter("sortBy", e.target.value || null)}
-          className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-        >
-          <option value="">Relevancia</option>
-          <option value="price_asc">Precio: menor a mayor</option>
-          <option value="price_desc">Precio: mayor a menor</option>
-          <option value="name_asc">Nombre A-Z</option>
-          <option value="newest">Más nuevos</option>
-        </select>
-      </div>
+        </div>
+      )}
 
       {/* Categories */}
       {categories.length > 0 && (

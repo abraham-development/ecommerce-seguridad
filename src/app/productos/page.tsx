@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import FilterSidebar from "@/components/filters/FilterSidebar";
+import ProductSort from "@/components/filters/ProductSort";
 import ProductGrid from "@/components/products/ProductGrid";
 import { getBrands, getCategories, getProducts } from "@/lib/supabase/data";
 import type { ProductFilters } from "@/types";
@@ -46,13 +47,20 @@ export default async function ProductosPage({ searchParams }: PageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">
-          {params.search ? `Resultados para "${params.search}"` : "Catálogo de productos"}
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">
-          {count} producto{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}
-        </p>
+      <div className="flex justify-between items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-white">
+            {params.search ? `Resultados para "${params.search}"` : "Catálogo de productos"}
+          </h1>
+          <p className="text-slate-400 text-sm mt-1">
+            {count} producto{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <div>
+          <Suspense fallback={<div className="h-10 w-48 bg-[#1E293B] animate-pulse rounded-lg" />}>
+            <ProductSort />
+          </Suspense>
+        </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">

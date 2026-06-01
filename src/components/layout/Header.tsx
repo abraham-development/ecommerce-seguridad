@@ -1,10 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart";
+import type { User } from "@supabase/supabase-js";
+import { isAdminAccount } from "@/lib/auth-routing";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -23,6 +25,66 @@ export default function Header() {
     () => false
   );
 
+  const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+
+    const checkAuth = async () => {
+      try {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+
+        // Initial check
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUser(user);
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", user.id)
+            .single();
+          setIsAdmin(isAdminAccount(profile?.role, user.email));
+        } else {
+          setUser(null);
+          setIsAdmin(false);
+        }
+        setAuthChecked(true);
+
+        // Auth listener
+        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (session?.user) {
+              setUser(session.user);
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", session.user.id)
+                .single();
+              setIsAdmin(isAdminAccount(profile?.role, session.user.email));
+            } else {
+              setUser(null);
+              setIsAdmin(false);
+            }
+          }
+        );
+        subscription = sub;
+      } catch {
+        setAuthChecked(true);
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
@@ -40,20 +102,49 @@ export default function Header() {
               </span>
             </Link>
 
-            {/* Auth buttons */}
+            {/* Auth buttons / User actions */}
             <div className="flex items-center gap-2">
-              <Link
-                href="/login"
-                className="px-4 py-2 text-sm font-medium text-[#2563EB] border border-[#2563EB] rounded-lg hover:bg-[#2563EB]/10 transition-colors"
-              >
-                Iniciar Sesión
-              </Link>
-              <Link
-                href="/registro"
-                className="px-4 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Registrarse
-              </Link>
+              {mounted && authChecked && user ? (
+                <>
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className="px-3 py-2 text-sm font-medium text-white bg-[#2563EB]/20 border border-[#2563EB]/40 rounded-lg hover:bg-[#2563EB]/30 transition-colors"
+                    >
+                      Panel Admin
+                    </Link>
+                  )}
+                  <Link
+                    href="/cuenta"
+                    className="px-3 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
+                  >
+                    Mi Cuenta
+                  </Link>
+                  <a
+                    href="/api/auth/signout"
+                    className="px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    Cerrar Sesión
+                  </a>
+                </>
+              ) : (
+                mounted && authChecked && (
+                  <>
+                    <Link
+                      href="/login"
+                      className="px-4 py-2 text-sm font-medium text-[#2563EB] border border-[#2563EB] rounded-lg hover:bg-[#2563EB]/10 transition-colors"
+                    >
+                      Iniciar Sesión
+                    </Link>
+                    <Link
+                      href="/registro"
+                      className="px-4 py-2 text-sm font-medium text-white bg-[#2563EB] rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Registrarse
+                    </Link>
+                  </>
+                )
+              )}
             </div>
           </div>
         </div>
