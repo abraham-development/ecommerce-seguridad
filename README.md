@@ -68,9 +68,33 @@ supabase status
 
 El seed de datos demo esta en `supabase/seed.sql`.
 
+## Azure Seguro Para Codex
+
+La fase inicial de Azure usa un marco seguro para que Codex solo pueda operar en desarrollo:
+
+- Resource Group permitido: `ecommerce`.
+- Region: `westus2`.
+- Identidad dedicada: `sp-codex-ecommerce-dev`.
+- Permiso: `Contributor` solo sobre el Resource Group `ecommerce`.
+- Infraestructura versionada: `infra/`.
+
+Las credenciales del service principal se guardan fuera del repositorio en `~/.azure-codex-ecommerce/`. No las copies a archivos versionados.
+
+Antes de desplegar recursos nuevos, revisar y ejecutar `what-if` con Bicep:
+
+```bash
+az deployment group what-if \
+  --resource-group ecommerce \
+  --template-file infra/main.bicep \
+  --parameters infra/dev.bicepparam
+```
+
+Ver mas detalles operativos en `infra/README.md` y el informe completo de arquitectura en `infra/azure-architecture.md`.
+
 ## Estructura del Proyecto
 
 ```text
+infra/                  # Bicep y guardrails de Azure para el RG ecommerce
 src/
 ├── app/                    # Next.js App Router
 │   ├── admin/              # Panel administrativo protegido
