@@ -1,18 +1,40 @@
-import { createClient } from "@/lib/supabase/server";
 import Badge from "@/components/ui/Badge";
-import { getOrderStatusLabel, getOrderStatusColor, formatPrice } from "@/lib/utils";
+import { query } from "@/lib/db";
+import {
+  getOrderStatusLabel,
+  getOrderStatusColor,
+  formatPrice,
+} from "@/lib/utils";
+
+interface AdminOrderRow {
+  id: string;
+  total: string | number;
+  status: string;
+  created_at: string;
+  profile: {
+    full_name: string | null;
+    email: string | null;
+  } | null;
+}
 
 export default async function AdminPedidosPage() {
-  let orders: Record<string, unknown>[] = [];
+  let orders: AdminOrderRow[] = [];
 
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("orders")
-      .select("*, profile:profiles(full_name)")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    orders = (data as Record<string, unknown>[]) ?? [];
+    orders = await query<AdminOrderRow>(
+      `
+        SELECT
+          o.id,
+          o.total,
+          o.status,
+          o.created_at,
+          row_to_json(p.*) AS profile
+        FROM orders o
+        LEFT JOIN profiles p ON p.id = o.user_id
+        ORDER BY o.created_at DESC
+        LIMIT 50
+      `
+    );
   } catch {
     orders = [];
   }
@@ -42,26 +64,29 @@ export default async function AdminPedidosPage() {
             </thead>
             <tbody className="divide-y divide-slate-700/50 bg-[#0F172A]">
               {orders.map((order) => (
-                <tr key={order.id as string} className="hover:bg-[#1E293B]/50 transition-colors">
+                <tr
+                  key={order.id}
+                  className="hover:bg-[#1E293B]/50 transition-colors"
+                >
                   <td className="px-4 py-3 text-sm font-mono text-slate-300">
-                    #{(order.id as string).slice(0, 8).toUpperCase()}
+                    #{order.id.slice(0, 8).toUpperCase()}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-300">
-                    {((order.profile as Record<string, unknown>)?.full_name as string) ?? "—"}
+                    {order.profile?.full_name ?? order.profile?.email ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-white">
-                    {formatPrice(order.total as number)}
+                    {formatPrice(Number(order.total))}
                   </td>
                   <td className="px-4 py-3">
                     <Badge
-                      className={getOrderStatusColor(order.status as string)}
+                      className={getOrderStatusColor(order.status)}
                       variant="ghost"
                     >
-                      {getOrderStatusLabel(order.status as string)}
+                      {getOrderStatusLabel(order.status)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {new Date(order.created_at as string).toLocaleDateString("es-AR")}
+                    {new Date(order.created_at).toLocaleDateString("es-AR")}
                   </td>
                 </tr>
               ))}

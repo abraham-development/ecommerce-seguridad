@@ -1,44 +1,47 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { query, queryOne } from "@/lib/db";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function DELETE(_req: Request, { params }: RouteParams) {
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  await query("DELETE FROM cart_items WHERE id = $1 AND user_id = $2", [
+    id,
+    user.id,
+  ]);
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { error } = await supabase
-    .from("cart_items")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const body = (await request.json()) as { quantity?: number };
+  const item = await queryOne(
+    `
+      UPDATE cart_items
+      SET quantity = $3
+      WHERE id = $1 AND user_id = $2
+      RETURNING *
+    `,
+    [id, user.id, body.quantity ?? 1]
+  );
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!item) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
-  const { quantity } = await request.json();
-
-  const { data, error } = await supabase
-    .from("cart_items")
-    .update({ quantity })
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(item);
 }

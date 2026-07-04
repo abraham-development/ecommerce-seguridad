@@ -1,51 +1,60 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { transaction } from "@/lib/db";
+import type { Address } from "@/types";
+
+interface OrderItemPayload {
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+}
+
+interface OrderPayload {
+  items?: OrderItemPayload[];
+  shipping_address?: Address;
+  total?: number;
+}
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const body = await request.json();
-  const { items, shipping_address, total } = body;
-
-  if (!items || items.length === 0) {
-    return NextResponse.json({ error: "No items" }, { status: 400 });
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Create order
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      user_id: user.id,
-      status: "pending",
-      total,
-      shipping_address,
-    })
-    .select()
-    .single();
-
-  if (orderError) {
-    return NextResponse.json({ error: orderError.message }, { status: 500 });
+  const body = (await request.json()) as OrderPayload;
+  if (!body.items || body.items.length === 0 || !body.shipping_address) {
+    return NextResponse.json({ error: "Invalid order" }, { status: 400 });
   }
 
-  // Create order items
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    items.map((item: { product_id: string; quantity: number; unit_price: number }) => ({
-      order_id: order.id,
-      product_id: item.product_id,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-    }))
-  );
+  const order = await transaction(async (client) => {
+    const [createdOrder] = await client.query<{ id: string }>(
+      `
+        INSERT INTO orders (user_id, status, total, shipping_address)
+        VALUES ($1, 'pending', $2, $3)
+        RETURNING *
+      `,
+      [user.id, body.total ?? 0, JSON.stringify(body.shipping_address)]
+    );
 
-  if (itemsError) {
-    return NextResponse.json({ error: itemsError.message }, { status: 500 });
-  }
+    for (const item of body.items ?? []) {
+      await client.query(
+        `
+          INSERT INTO order_items (
+            order_id,
+            product_id,
+            quantity,
+            unit_price
+          )
+          VALUES ($1, $2, $3, $4)
+        `,
+        [createdOrder.id, item.product_id, item.quantity, item.unit_price]
+      );
+    }
 
-  // Clear cart items
-  await supabase.from("cart_items").delete().eq("user_id", user.id);
+    await client.query("DELETE FROM cart_items WHERE user_id = $1", [user.id]);
+
+    return createdOrder;
+  });
 
   return NextResponse.json(order, { status: 201 });
 }

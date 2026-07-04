@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile, getCurrentUser } from "@/lib/auth";
+import { query, queryOne } from "@/lib/db";
 import {
   mockBrands,
   mockCategories,
@@ -15,9 +16,9 @@ import type {
   OrderItem,
   Product,
   ProductFilters,
+  ProductSpecs,
   Profile,
 } from "@/types";
-import type { User } from "@supabase/supabase-js";
 
 type ProductListResult = {
   products: Product[];
@@ -25,154 +26,57 @@ type ProductListResult = {
 };
 
 type CurrentAccount = {
-  user: User;
+  user: {
+    id: string;
+    email: string | null;
+  };
   profile: Profile | null;
 };
 
-function toProducts(data: unknown): Product[] {
-  return (Array.isArray(data) ? data : []) as Product[];
+interface ProductRow extends Omit<Product, "price" | "specs" | "brand" | "category"> {
+  price: string | number;
+  specs: ProductSpecs | null;
+  brand: Brand | null;
+  category: Category | null;
+  total_count?: string | number;
 }
 
-function toCategories(data: unknown): Category[] {
-  return (Array.isArray(data) ? data : []) as Category[];
+interface OrderRow extends Omit<Order, "total" | "order_items" | "profile"> {
+  total: string | number;
+  order_items?: OrderItem[];
+  profile?: Profile;
 }
 
-function toBrands(data: unknown): Brand[] {
-  return (Array.isArray(data) ? data : []) as Brand[];
+const productSelect = `
+  SELECT
+    p.*,
+    row_to_json(b.*) AS brand,
+    row_to_json(c.*) AS category
+  FROM products p
+  LEFT JOIN brands b ON b.id = p.brand_id
+  LEFT JOIN categories c ON c.id = p.category_id
+`;
+
+function toProduct(row: ProductRow): Product {
+  return {
+    ...row,
+    price: Number(row.price),
+    images: row.images ?? [],
+    specs: row.specs ?? {},
+    brand: row.brand ?? undefined,
+    category: row.category ?? undefined,
+  };
 }
 
-function toOrders(data: unknown): Order[] {
-  return (Array.isArray(data) ? data : []) as Order[];
+function toProducts(rows: ProductRow[]): Product[] {
+  return rows.map(toProduct);
 }
 
-export async function getCategories(): Promise<Category[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) throw error;
-    const categories = toCategories(data);
-    return categories.length > 0 ? categories : mockCategories;
-  } catch {
-    return mockCategories;
-  }
-}
-
-export async function getBrands(): Promise<Brand[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("brands")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (error) throw error;
-    const brands = toBrands(data);
-    return brands.length > 0 ? brands : mockBrands;
-  } catch {
-    return mockBrands;
-  }
-}
-
-export async function getFeaturedProducts(): Promise<Product[]> {
-  try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(8);
-
-    if (error) throw error;
-    const products = toProducts(data);
-    return products.length > 0 ? products : mockProducts.slice(0, 8);
-  } catch {
-    return mockProducts.slice(0, 8);
-  }
-}
-
-export async function getProducts(
-  filters: ProductFilters
-): Promise<ProductListResult> {
-  try {
-    const supabase = await createClient();
-
-    let query = supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)", { count: "exact" })
-      .eq("is_active", true);
-
-    if (filters.search) {
-      query = query.ilike("name", `%${filters.search}%`);
-    }
-
-    if (filters.category) {
-      const slugs = filters.category.split(",").filter(Boolean);
-      const { data: categories, error } = await supabase
-        .from("categories")
-        .select("id")
-        .in("slug", slugs);
-
-      if (error) throw error;
-      const categoryIds = ((categories ?? []) as Pick<Category, "id">[]).map(
-        (category) => category.id
-      );
-      if (categoryIds.length === 0) return { products: [], count: 0 };
-      query = query.in("category_id", categoryIds);
-    }
-
-    if (filters.brand) {
-      const names = filters.brand.split(",").filter(Boolean);
-      const { data: brands, error } = await supabase
-        .from("brands")
-        .select("id")
-        .in("name", names);
-
-      if (error) throw error;
-      const brandIds = ((brands ?? []) as Pick<Brand, "id">[]).map(
-        (brand) => brand.id
-      );
-      if (brandIds.length === 0) return { products: [], count: 0 };
-      query = query.in("brand_id", brandIds);
-    }
-
-    if (filters.minPrice !== undefined) {
-      query = query.gte("price", filters.minPrice);
-    }
-    if (filters.maxPrice !== undefined) {
-      query = query.lte("price", filters.maxPrice);
-    }
-
-    switch (filters.sortBy) {
-      case "price_asc":
-        query = query.order("price", { ascending: true });
-        break;
-      case "price_desc":
-        query = query.order("price", { ascending: false });
-        break;
-      case "name_asc":
-        query = query.order("name", { ascending: true });
-        break;
-      default:
-        query = query.order("created_at", { ascending: false });
-        break;
-    }
-
-    const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 12;
-    const from = (page - 1) * pageSize;
-    const to = page * pageSize - 1;
-    const { data, count, error } = await query.range(from, to);
-
-    if (error) throw error;
-    return { products: toProducts(data), count: count ?? 0 };
-  } catch {
-    return getMockProducts(filters);
-  }
+function toOrder(row: OrderRow): Order {
+  return {
+    ...row,
+    total: Number(row.total),
+  };
 }
 
 function getMockProducts(filters: ProductFilters): ProductListResult {
@@ -226,18 +130,122 @@ function getMockProducts(filters: ProductFilters): ProductListResult {
   };
 }
 
+export async function getCategories(): Promise<Category[]> {
+  try {
+    const categories = await query<Category>(
+      "SELECT * FROM categories ORDER BY name ASC"
+    );
+    return categories.length > 0 ? categories : mockCategories;
+  } catch {
+    return mockCategories;
+  }
+}
+
+export async function getBrands(): Promise<Brand[]> {
+  try {
+    const brands = await query<Brand>("SELECT * FROM brands ORDER BY name ASC");
+    return brands.length > 0 ? brands : mockBrands;
+  } catch {
+    return mockBrands;
+  }
+}
+
+export async function getFeaturedProducts(): Promise<Product[]> {
+  try {
+    const rows = await query<ProductRow>(
+      `${productSelect}
+       WHERE p.is_active = TRUE
+       ORDER BY p.created_at DESC
+       LIMIT 8`
+    );
+    const products = toProducts(rows);
+    return products.length > 0 ? products : mockProducts.slice(0, 8);
+  } catch {
+    return mockProducts.slice(0, 8);
+  }
+}
+
+export async function getProducts(
+  filters: ProductFilters
+): Promise<ProductListResult> {
+  try {
+    const values: unknown[] = [];
+    const where = ["p.is_active = TRUE"];
+
+    if (filters.search) {
+      values.push(`%${filters.search}%`);
+      where.push(`p.name ILIKE $${values.length}`);
+    }
+
+    if (filters.category) {
+      values.push(filters.category.split(",").filter(Boolean));
+      where.push(`c.slug = ANY($${values.length})`);
+    }
+
+    if (filters.brand) {
+      values.push(filters.brand.split(",").filter(Boolean));
+      where.push(`b.name = ANY($${values.length})`);
+    }
+
+    if (filters.minPrice !== undefined) {
+      values.push(filters.minPrice);
+      where.push(`p.price >= $${values.length}`);
+    }
+
+    if (filters.maxPrice !== undefined) {
+      values.push(filters.maxPrice);
+      where.push(`p.price <= $${values.length}`);
+    }
+
+    const orderBy =
+      filters.sortBy === "price_asc"
+        ? "p.price ASC"
+        : filters.sortBy === "price_desc"
+        ? "p.price DESC"
+        : filters.sortBy === "name_asc"
+        ? "p.name ASC"
+        : "p.created_at DESC";
+
+    const page = filters.page ?? 1;
+    const pageSize = filters.pageSize ?? 12;
+    values.push(pageSize, (page - 1) * pageSize);
+
+    const rows = await query<ProductRow>(
+      `
+        SELECT
+          p.*,
+          row_to_json(b.*) AS brand,
+          row_to_json(c.*) AS category,
+          COUNT(*) OVER() AS total_count
+        FROM products p
+        LEFT JOIN brands b ON b.id = p.brand_id
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE ${where.join(" AND ")}
+        ORDER BY ${orderBy}
+        LIMIT $${values.length - 1}
+        OFFSET $${values.length}
+      `,
+      values
+    );
+
+    return {
+      products: toProducts(rows),
+      count: Number(rows[0]?.total_count ?? 0),
+    };
+  } catch {
+    return getMockProducts(filters);
+  }
+}
+
 export async function getProductBySlug(slug: string): Promise<Product | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .single();
-
-    if (error) throw error;
-    return data as Product;
+    const row = await queryOne<ProductRow>(
+      `${productSelect}
+       WHERE p.slug = $1 AND p.is_active = TRUE
+       LIMIT 1`,
+      [slug]
+    );
+    return row ? toProduct(row) : null;
   } catch {
     return mockProducts.find((product) => product.slug === slug) ?? null;
   }
@@ -245,15 +253,13 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return data as Product;
+    const row = await queryOne<ProductRow>(
+      `${productSelect}
+       WHERE p.id = $1
+       LIMIT 1`,
+      [id]
+    );
+    return row ? toProduct(row) : null;
   } catch {
     return mockProducts.find((product) => product.id === id) ?? null;
   }
@@ -261,24 +267,20 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getRelatedProducts(product: Product): Promise<Product[]> {
   try {
-    const filters = [
-      product.category_id ? `category_id.eq.${product.category_id}` : null,
-      product.brand_id ? `brand_id.eq.${product.brand_id}` : null,
-    ].filter((filter): filter is string => filter !== null);
+    if (!product.category_id && !product.brand_id) return [];
 
-    if (filters.length === 0) return [];
-
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("is_active", true)
-      .neq("id", product.id)
-      .or(filters.join(","))
-      .limit(4);
-
-    if (error) throw error;
-    return toProducts(data);
+    const rows = await query<ProductRow>(
+      `${productSelect}
+       WHERE p.is_active = TRUE
+         AND p.id <> $1
+         AND (
+           ($2::uuid IS NOT NULL AND p.category_id = $2::uuid)
+           OR ($3::uuid IS NOT NULL AND p.brand_id = $3::uuid)
+         )
+       LIMIT 4`,
+      [product.id, product.category_id, product.brand_id]
+    );
+    return toProducts(rows);
   } catch {
     return mockProducts
       .filter(
@@ -295,15 +297,10 @@ export async function getCategoryBySlug(
   slug: string
 ): Promise<Category | null> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("categories")
-      .select("*")
-      .eq("slug", slug)
-      .single();
-
-    if (error) throw error;
-    return data as Category;
+    return await queryOne<Category>(
+      "SELECT * FROM categories WHERE slug = $1 LIMIT 1",
+      [slug]
+    );
   } catch {
     return mockCategories.find((category) => category.slug === slug) ?? null;
   }
@@ -312,21 +309,17 @@ export async function getCategoryBySlug(
 export async function getProductsByCategorySlug(
   slug: string
 ): Promise<Product[]> {
-  const category = await getCategoryBySlug(slug);
-  if (!category) return [];
-
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("is_active", true)
-      .eq("category_id", category.id)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return toProducts(data);
+    const rows = await query<ProductRow>(
+      `${productSelect}
+       WHERE p.is_active = TRUE AND c.slug = $1
+       ORDER BY p.created_at DESC`,
+      [slug]
+    );
+    return toProducts(rows);
   } catch {
+    const category = mockCategories.find((item) => item.slug === slug);
+    if (!category) return [];
     return mockProducts.filter(
       (product) =>
         product.category?.slug === slug || product.category_id === category.id
@@ -344,16 +337,13 @@ export async function getProductsByBrandSlug(slug: string): Promise<Product[]> {
   if (!brand) return [];
 
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .eq("is_active", true)
-      .eq("brand_id", brand.id)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return toProducts(data);
+    const rows = await query<ProductRow>(
+      `${productSelect}
+       WHERE p.is_active = TRUE AND p.brand_id = $1
+       ORDER BY p.created_at DESC`,
+      [brand.id]
+    );
+    return toProducts(rows);
   } catch {
     return mockProducts.filter(
       (product) => product.brand && generateSlug(product.brand.name) === slug
@@ -363,62 +353,47 @@ export async function getProductsByBrandSlug(slug: string): Promise<Product[]> {
 
 export async function getAdminProducts(): Promise<Product[]> {
   try {
-    const supabase = await createClient();
-    const { data, error } = await supabase
-      .from("products")
-      .select("*, brand:brands(*), category:categories(*)")
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return toProducts(data);
+    const rows = await query<ProductRow>(
+      `${productSelect}
+       ORDER BY p.created_at DESC`
+    );
+    return toProducts(rows);
   } catch {
     return mockProducts;
   }
 }
 
 export async function getCurrentAccount(): Promise<CurrentAccount | null> {
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) return null;
 
-    if (!user) return null;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .single();
-
-    return { user, profile: (profile as Profile | null) ?? null };
-  } catch {
-    return null;
-  }
+  const profile = await getCurrentProfile();
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+    },
+    profile,
+  };
 }
 
 export async function getUserOrders(limit?: number): Promise<Order[]> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await getCurrentUser();
     if (!user) return [];
 
-    let query = supabase
-      .from("orders")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    const values: unknown[] = [user.id];
+    const limitClause = limit !== undefined ? "LIMIT $2" : "";
+    if (limit !== undefined) values.push(limit);
 
-    if (limit !== undefined) {
-      query = query.limit(limit);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return toOrders(data);
+    const rows = await query<OrderRow>(
+      `SELECT * FROM orders
+       WHERE user_id = $1
+       ORDER BY created_at DESC
+       ${limitClause}`,
+      values
+    );
+    return rows.map(toOrder);
   } catch {
     return limit ? mockOrders.slice(0, limit) : mockOrders;
   }
@@ -426,22 +401,36 @@ export async function getUserOrders(limit?: number): Promise<Order[]> {
 
 export async function getUserOrder(id: string): Promise<Order | null> {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
+    const user = await getCurrentUser();
     if (!user) return null;
 
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*, order_items(*, product:products(*))")
-      .eq("id", id)
-      .eq("user_id", user.id)
-      .single();
+    const order = await queryOne<OrderRow>(
+      "SELECT * FROM orders WHERE id = $1 AND user_id = $2 LIMIT 1",
+      [id, user.id]
+    );
+    if (!order) return null;
 
-    if (error) throw error;
-    return data as Order;
+    const items = await query<OrderItem & { product: ProductRow | null }>(
+      `
+        SELECT
+          oi.*,
+          row_to_json(p.*) AS product
+        FROM order_items oi
+        LEFT JOIN products p ON p.id = oi.product_id
+        WHERE oi.order_id = $1
+        ORDER BY oi.created_at ASC
+      `,
+      [id]
+    );
+
+    return {
+      ...toOrder(order),
+      order_items: items.map((item) => ({
+        ...item,
+        unit_price: Number(item.unit_price),
+        product: item.product ? toProduct(item.product) : undefined,
+      })),
+    };
   } catch {
     const order = mockOrders.find((item) => item.id === id);
     if (!order) return null;

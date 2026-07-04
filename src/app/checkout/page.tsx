@@ -1,26 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
 import CheckoutStepper from "@/components/checkout/CheckoutStepper";
 import CheckoutAuthGate from "@/components/checkout/CheckoutAuthGate";
 import Spinner from "@/components/ui/Spinner";
 
 export default function CheckoutPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
+        const response = await fetch("/api/auth/account");
+        const data = (await response.json()) as { isAuthenticated: boolean };
+        setAuthenticated(data.isAuthenticated);
       } catch {
-        // Supabase no disponible en modo mockup
+        setAuthenticated(false);
       }
       setChecked(true);
     })();
@@ -34,8 +30,8 @@ export default function CheckoutPage() {
     );
   }
 
-  if (!user) {
-    return <CheckoutAuthGate onSuccess={(u) => setUser(u)} />;
+  if (!authenticated) {
+    return <CheckoutAuthGate />;
   }
 
   return (

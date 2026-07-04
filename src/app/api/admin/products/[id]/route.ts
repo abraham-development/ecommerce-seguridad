@@ -1,66 +1,81 @@
 import { NextResponse } from "next/server";
-import { isAdminAccount } from "@/lib/auth-routing";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminUser } from "@/lib/auth";
+import { query, queryOne } from "@/lib/db";
 import { generateSlug } from "@/lib/utils";
+import type { Product, ProductSpecs } from "@/types";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-async function verifyAdmin() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) return { error: "Unauthorized", supabase, user: null };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (!isAdminAccount(profile?.role, user.email)) {
-    return { error: "Forbidden", supabase, user };
-  }
-
-  return { error: null, supabase, user };
+interface ProductPayload {
+  name?: string;
+  description?: string | null;
+  price?: number;
+  stock?: number;
+  brand_id?: string | null;
+  category_id?: string | null;
+  images?: string[];
+  specs?: ProductSpecs;
+  is_active?: boolean;
 }
 
 export async function PUT(request: Request, { params }: RouteParams) {
-  const { id } = await params;
-  const { error, supabase } = await verifyAdmin();
-
-  if (error) {
-    return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 });
+  const admin = await requireAdminUser();
+  if (!admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
-  if (body.name) body.slug = generateSlug(body.name);
+  const { id } = await params;
+  const body = (await request.json()) as ProductPayload;
+  const product = await queryOne<Product>(
+    `
+      UPDATE products
+      SET
+        name = COALESCE($2, name),
+        slug = COALESCE($3, slug),
+        description = $4,
+        price = COALESCE($5, price),
+        stock = COALESCE($6, stock),
+        brand_id = $7,
+        category_id = $8,
+        images = COALESCE($9, images),
+        specs = COALESCE($10, specs),
+        is_active = COALESCE($11, is_active),
+        updated_at = NOW()
+      WHERE id = $1
+      RETURNING *
+    `,
+    [
+      id,
+      body.name ?? null,
+      body.name ? generateSlug(body.name) : null,
+      body.description ?? null,
+      body.price ?? null,
+      body.stock ?? null,
+      body.brand_id ?? null,
+      body.category_id ?? null,
+      body.images ?? null,
+      body.specs ? JSON.stringify(body.specs) : null,
+      body.is_active ?? null,
+    ]
+  );
 
-  const { data, error: dbError } = await supabase
-    .from("products")
-    .update({ ...body, updated_at: new Date().toISOString() })
-    .eq("id", id)
-    .select()
-    .single();
+  if (!product) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
 
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(product);
 }
 
-export async function DELETE(_req: Request, { params }: RouteParams) {
-  const { id } = await params;
-  const { error, supabase } = await verifyAdmin();
-
-  if (error) {
-    return NextResponse.json({ error }, { status: error === "Unauthorized" ? 401 : 403 });
+export async function DELETE(_request: Request, { params }: RouteParams) {
+  const admin = await requireAdminUser();
+  if (!admin) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const { error: dbError } = await supabase
-    .from("products")
-    .delete()
-    .eq("id", id);
+  const { id } = await params;
+  await query("DELETE FROM products WHERE id = $1", [id]);
 
-  if (dbError) return NextResponse.json({ error: dbError.message }, { status: 500 });
   return NextResponse.json({ success: true });
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
@@ -35,20 +34,19 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
       country: form.country,
     };
 
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    const response = await fetch("/api/account/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         full_name: form.full_name,
         phone: form.phone,
         address,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", profile.id);
+      }),
+    });
 
     setSaving(false);
 
-    if (error) {
+    if (!response.ok) {
       toast.error("No se pudo actualizar el perfil");
       return;
     }

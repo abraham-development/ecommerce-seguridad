@@ -1,40 +1,54 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { query, queryOne } from "@/lib/db";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const items = await query(
+    `
+      SELECT
+        ci.*,
+        row_to_json(p.*) AS product
+      FROM cart_items ci
+      INNER JOIN products p ON p.id = ci.product_id
+      WHERE ci.user_id = $1
+      ORDER BY ci.created_at DESC
+    `,
+    [user.id]
+  );
 
-  const { data, error } = await supabase
-    .from("cart_items")
-    .select("*, product:products(*, brand:brands(*), category:categories(*))")
-    .eq("user_id", user.id);
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+  return NextResponse.json(items);
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const body = (await request.json()) as {
+    product_id?: string;
+    quantity?: number;
+  };
 
-  const body = await request.json();
-  const { product_id, quantity = 1 } = body;
+  if (!body.product_id) {
+    return NextResponse.json({ error: "Missing product_id" }, { status: 400 });
+  }
 
-  // Upsert cart item
-  const { data, error } = await supabase
-    .from("cart_items")
-    .upsert(
-      { user_id: user.id, product_id, quantity },
-      { onConflict: "user_id,product_id" }
-    )
-    .select()
-    .single();
+  const item = await queryOne(
+    `
+      INSERT INTO cart_items (user_id, product_id, quantity)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (user_id, product_id)
+      DO UPDATE SET quantity = EXCLUDED.quantity
+      RETURNING *
+    `,
+    [user.id, body.product_id, body.quantity ?? 1]
+  );
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data, { status: 201 });
+  return NextResponse.json(item, { status: 201 });
 }

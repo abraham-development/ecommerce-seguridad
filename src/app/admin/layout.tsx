@@ -56,13 +56,13 @@ export default async function AdminLayout({
           ))}
         </nav>
         <div className="p-4 border-t border-slate-700">
-          <a
-            href="/api/auth/signout"
+          <Link
+            href="/api/auth/signout?callbackUrl=/"
             className="mb-3 flex items-center gap-2.5 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Cerrar sesión
-          </a>
+          </Link>
           <Link
             href="/"
             className="text-xs text-slate-500 hover:text-slate-300 transition-colors"

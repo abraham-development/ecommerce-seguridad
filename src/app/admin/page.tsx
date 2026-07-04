@@ -1,26 +1,31 @@
-import { createClient } from "@/lib/supabase/server";
 import { Package, ShoppingBag, Users, DollarSign } from "lucide-react";
+import { queryOne } from "@/lib/db";
 import { formatPrice } from "@/lib/utils";
+
+interface MetricsRow {
+  products: string | number;
+  orders: string | number;
+  users: string | number;
+  revenue: string | number | null;
+}
 
 async function getMetrics() {
   try {
-    const supabase = await createClient();
-
-    const [products, orders, users, revenue] = await Promise.all([
-      supabase.from("products").select("id", { count: "exact", head: true }),
-      supabase.from("orders").select("id", { count: "exact", head: true }),
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
-      supabase.from("orders").select("total").eq("status", "delivered"),
-    ]);
-
-    const totalRevenue =
-      revenue.data?.reduce((s: number, o: { total: number }) => s + o.total, 0) ?? 0;
+    const metrics = await queryOne<MetricsRow>(
+      `
+        SELECT
+          (SELECT COUNT(*) FROM products) AS products,
+          (SELECT COUNT(*) FROM orders) AS orders,
+          (SELECT COUNT(*) FROM profiles) AS users,
+          (SELECT COALESCE(SUM(total), 0) FROM orders WHERE status = 'delivered') AS revenue
+      `
+    );
 
     return {
-      products: products.count ?? 0,
-      orders: orders.count ?? 0,
-      users: users.count ?? 0,
-      revenue: totalRevenue,
+      products: Number(metrics?.products ?? 0),
+      orders: Number(metrics?.orders ?? 0),
+      users: Number(metrics?.users ?? 0),
+      revenue: Number(metrics?.revenue ?? 0),
     };
   } catch {
     return { products: 20, orders: 45, users: 120, revenue: 2850000 };

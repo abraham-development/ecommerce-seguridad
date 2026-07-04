@@ -53,12 +53,12 @@ export default async function CuentaPage() {
             >
               <User className="h-4 w-4" /> Editar perfil
             </Link>
-            <a
-              href="/api/auth/signout"
+            <Link
+              href="/api/auth/signout?callbackUrl=/"
               className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <LogOut className="h-4 w-4" /> Cerrar sesión
-            </a>
+            </Link>
           </div>
         </div>
 

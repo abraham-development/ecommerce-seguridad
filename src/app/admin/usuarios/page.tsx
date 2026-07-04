@@ -1,16 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
 import Badge from "@/components/ui/Badge";
+import { query } from "@/lib/db";
+import type { Profile } from "@/types";
 
 export default async function AdminUsuariosPage() {
-  let profiles: Record<string, unknown>[] = [];
+  let profiles: Profile[] = [];
 
   try {
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .order("created_at", { ascending: false });
-    profiles = (data as Record<string, unknown>[]) ?? [];
+    profiles = await query<Profile>(
+      "SELECT * FROM profiles ORDER BY created_at DESC"
+    );
   } catch {
     profiles = [];
   }
@@ -39,23 +37,26 @@ export default async function AdminUsuariosPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50 bg-[#0F172A]">
-              {profiles.map((p) => (
-                <tr key={p.id as string} className="hover:bg-[#1E293B]/50 transition-colors">
+              {profiles.map((profile) => (
+                <tr
+                  key={profile.id}
+                  className="hover:bg-[#1E293B]/50 transition-colors"
+                >
                   <td className="px-4 py-3 text-sm text-white">
-                    {(p.full_name as string) ?? "—"}
+                    {profile.full_name ?? profile.email ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {(p.phone as string) ?? "—"}
+                    {profile.phone ?? "—"}
                   </td>
                   <td className="px-4 py-3">
                     <Badge
-                      variant={p.role === "admin" ? "primary" : "ghost"}
+                      variant={profile.role === "admin" ? "primary" : "ghost"}
                     >
-                      {p.role as string}
+                      {profile.role}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {new Date(p.created_at as string).toLocaleDateString("es-AR")}
+                    {new Date(profile.created_at).toLocaleDateString("es-AR")}
                   </td>
                 </tr>
               ))}

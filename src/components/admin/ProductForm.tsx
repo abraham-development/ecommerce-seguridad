@@ -6,7 +6,6 @@ import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
 import type { Product, Category, Brand } from "@/types";
 import toast from "react-hot-toast";
 
@@ -45,23 +44,22 @@ export default function ProductForm({
     if (files.length === 0) return;
 
     setUploading(true);
-    const supabase = createClient();
 
     try {
       const uploaded: string[] = [];
       for (const file of files) {
-        const ext = file.name.split(".").pop();
-        const fileName = `products/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-        const { data, error } = await supabase.storage
-          .from("product-images")
-          .upload(fileName, file);
+        const formData = new FormData();
+        formData.append("file", file);
 
-        if (error) throw error;
+        const response = await fetch("/api/admin/product-images", {
+          method: "POST",
+          body: formData,
+        });
 
-        const { data: urlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(data.path);
-        uploaded.push(urlData.publicUrl);
+        if (!response.ok) throw new Error("Upload failed");
+
+        const data = (await response.json()) as { url: string };
+        uploaded.push(data.url);
       }
       setImages((prev) => [...prev, ...uploaded]);
       toast.success("Imágenes subidas correctamente");

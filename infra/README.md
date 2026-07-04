@@ -8,6 +8,13 @@ The target Azure architecture for this ecommerce application is documented in:
 infra/azure-architecture.md
 ```
 
+The MVP implementation also includes:
+
+```text
+infra/postgres-schema.sql       # Azure PostgreSQL schema to apply after DB creation
+.github/workflows/azure-dev.yml # GitHub Actions OIDC pipeline for dev
+```
+
 ## Fixed Scope
 
 All Codex-managed Azure operations are limited to:
@@ -70,6 +77,41 @@ az deployment group create \
   --template-file infra/main.bicep \
   --parameters infra/dev.bicepparam
 ```
+
+After a successful deployment, the non-sensitive Bicep output `webAppUrl`
+contains the public App Service URL:
+
+```text
+https://<webAppName>.azurewebsites.net
+```
+
+This URL is enough for the MVP and can be shared without buying a custom domain.
+
+## Required Provider Registration
+
+Before the first full deployment, an Owner must register these providers at
+subscription scope:
+
+```text
+Microsoft.DBforPostgreSQL
+Microsoft.KeyVault
+Microsoft.OperationalInsights
+Microsoft.Insights
+```
+
+Codex must not register providers because its identity is intentionally limited
+to `Contributor` on the `ecommerce` Resource Group.
+
+## Database Bootstrap
+
+After PostgreSQL Flexible Server is deployed and reachable, apply:
+
+```bash
+psql "$DATABASE_URL" -f infra/postgres-schema.sql
+```
+
+Use the `DATABASE_URL` stored in Key Vault. Do not commit database passwords or
+connection strings.
 
 Validate the service principal RBAC scope:
 

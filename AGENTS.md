@@ -48,7 +48,112 @@ supabase stop                           # Detener instancia local
 supabase status                         # Ver URLs de servicios locales
 ```
 
-> El schema base vive en `supabase/migrations/001_initial_schema.sql`. Ya existen migraciones incrementales `002` a `006`; no reescribir migraciones aplicadas salvo pedido explícito. Para cambios de schema/RLS, crear una nueva migración.
+> El schema base vive en `supabase/migrations/001_initial_schema.sql`. Ya existen migraciones incrementales `002` a `007`; no reescribir migraciones aplicadas salvo pedido explícito. Para cambios de schema/RLS, crear una nueva migración.
+
+---
+
+## Azure e infraestructura
+
+La infraestructura Azure de desarrollo vive en `infra/` y debe mantenerse alineada con:
+
+- `infra/README.md` — guardrails operativos.
+- `infra/azure-architecture.md` — informe completo de arquitectura y flujos.
+- `infra/main.bicep` — infraestructura declarativa.
+- `infra/dev.bicepparam` — parametros del entorno dev.
+
+### Alcance fijo
+
+Codex solo puede operar Azure dentro de este alcance:
+
+```text
+Subscription: 3274731e-9035-49fa-9d05-11c978277669
+Tenant: 3d72d4fc-032a-439f-9051-a3bfcc6d8706
+Resource Group: ecommerce
+Location: westus2
+Service Principal: sp-codex-ecommerce-dev
+```
+
+Acceso verificado: Codex visualiza el Resource Group `ecommerce` en `westus2` con estado `Succeeded` mediante la sesion Azure CLI dedicada.
+
+Reglas obligatorias:
+
+- Usar la identidad dedicada `sp-codex-ecommerce-dev`, no el login personal del usuario, para operaciones de Codex.
+- Todo despliegue debe ser a nivel de Resource Group con `az deployment group`.
+- Toda operacion de despliegue debe apuntar explicitamente a `--resource-group ecommerce`.
+- No ejecutar despliegues a nivel de suscripcion, management group o tenant.
+- No crear ni modificar recursos fuera del Resource Group `ecommerce`.
+- No ejecutar cambios RBAC, no asignar roles, no usar `Owner`, `User Access Administrator` ni permisos equivalentes.
+- No registrar providers con la identidad de Codex; si falta un provider, pedir que lo registre el usuario Owner.
+- No commitear credenciales, secretos, archivos `.env`, ni contenido de `~/.azure-codex-ecommerce/`.
+
+### Sesion Azure CLI para Codex
+
+Usar siempre un directorio de configuracion Azure CLI separado:
+
+```bash
+source "$HOME/.azure-codex-ecommerce/env"
+export AZURE_CONFIG_DIR="$HOME/.azure-codex-ecommerce/cli"
+
+az login --service-principal \
+  --username "$AZURE_CLIENT_ID" \
+  --password "$AZURE_CLIENT_SECRET" \
+  --tenant "$AZURE_TENANT_ID" \
+  --allow-no-subscriptions
+
+az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+```
+
+### Comandos seguros
+
+Antes de desplegar, revisar siempre el plan:
+
+```bash
+az deployment group what-if \
+  --subscription "$AZURE_SUBSCRIPTION_ID" \
+  --resource-group ecommerce \
+  --template-file infra/main.bicep \
+  --parameters infra/dev.bicepparam
+```
+
+Desplegar solo despues de revisar el `what-if`:
+
+```bash
+az deployment group create \
+  --subscription "$AZURE_SUBSCRIPTION_ID" \
+  --resource-group ecommerce \
+  --template-file infra/main.bicep \
+  --parameters infra/dev.bicepparam
+```
+
+Validar el alcance RBAC del service principal cuando haga falta:
+
+```bash
+az role assignment list \
+  --assignee "$AZURE_CLIENT_ID" \
+  --all \
+  --query '[].{role:roleDefinitionName,scope:scope}' \
+  -o table
+```
+
+El unico scope esperado para Codex es:
+
+```text
+/subscriptions/3274731e-9035-49fa-9d05-11c978277669/resourceGroups/ecommerce
+```
+
+### Arquitectura Azure objetivo
+
+La arquitectura dev planificada migra gradualmente desde Supabase hacia servicios Azure-native:
+
+- Compute: Azure App Service para Next.js SSR y Route Handlers.
+- Auth clientes: Microsoft Entra External ID.
+- DB: Azure Database for PostgreSQL Flexible Server.
+- Imagenes: Azure Blob Storage (`product-images`).
+- Secretos: Azure Key Vault.
+- Observabilidad: Application Insights + Log Analytics.
+- CI/CD: GitHub Actions con OIDC.
+
+En dev se prioriza bajo costo y simplicidad. Produccion queda fuera de alcance de este Resource Group.
 
 ---
 
@@ -70,6 +175,7 @@ supabase status                         # Ver URLs de servicios locales
 ## Arquitectura del proyecto
 
 ```
+infra/                  # Bicep, parametros y documentacion Azure para RG ecommerce
 src/
 ├── app/                  # Next.js App Router (páginas y API routes)
 │   ├── admin/            # Panel admin protegido por src/app/admin/layout.tsx
@@ -359,7 +465,7 @@ export async function POST(request: Request) {
 
 ## Notas actuales
 
-- `README.md` tiene referencias desactualizadas (`middleware.ts`, Next 14+) frente al estado real de la app.
 - `CLAUDE.md` aparece borrado en el working tree al momento de este mapeo; no restaurarlo ni modificarlo salvo pedido explícito.
 - `next.config.ts` permite imágenes de `*.supabase.co/storage/v1/object/public/**` y `images.unsplash.com`.
 - `ProductForm` sube imágenes al bucket `product-images`; mantener rutas compatibles con Storage público.
+- El plan Azure se mantiene con Key Vault; no reemplazar secretos cloud por `.env` para despliegues.

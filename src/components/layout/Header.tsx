@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Shield, ShoppingCart } from "lucide-react";
 import { useCartStore } from "@/store/cart";
-import type { User } from "@supabase/supabase-js";
 import { isAdminAccount } from "@/lib/auth-routing";
+import type { UserRole } from "@/types";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -25,64 +25,35 @@ export default function Header() {
     () => false
   );
 
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{
+    email: string | null;
+    role: UserRole;
+  } | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null;
-
     const checkAuth = async () => {
       try {
-        const { createClient } = await import("@/lib/supabase/client");
-        const supabase = createClient();
+        const response = await fetch("/api/auth/account");
+        const data = (await response.json()) as {
+          user: { email: string | null; role: UserRole } | null;
+        };
 
-        // Initial check
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUser(user);
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", user.id)
-            .single();
-          setIsAdmin(isAdminAccount(profile?.role, user.email));
+        if (data.user) {
+          setUser(data.user);
+          setIsAdmin(isAdminAccount(data.user.role, data.user.email));
         } else {
           setUser(null);
           setIsAdmin(false);
         }
         setAuthChecked(true);
-
-        // Auth listener
-        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            if (session?.user) {
-              setUser(session.user);
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", session.user.id)
-                .single();
-              setIsAdmin(isAdminAccount(profile?.role, session.user.email));
-            } else {
-              setUser(null);
-              setIsAdmin(false);
-            }
-          }
-        );
-        subscription = sub;
       } catch {
         setAuthChecked(true);
       }
     };
 
     checkAuth();
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
   }, []);
 
   const isActive = (href: string) =>
@@ -120,12 +91,12 @@ export default function Header() {
                   >
                     Mi Cuenta
                   </Link>
-                  <a
-                    href="/api/auth/signout"
+                  <Link
+                    href="/api/auth/signout?callbackUrl=/"
                     className="px-3 py-2 text-sm font-medium text-red-400 hover:text-red-300 transition-colors"
                   >
                     Cerrar Sesión
-                  </a>
+                  </Link>
                 </>
               ) : (
                 mounted && authChecked && (

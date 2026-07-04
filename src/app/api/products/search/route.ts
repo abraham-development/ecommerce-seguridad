@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { query } from "@/lib/db";
 import { mockProducts } from "@/lib/mock-data";
 
 export async function GET(request: Request) {
@@ -9,20 +10,34 @@ export async function GET(request: Request) {
     return NextResponse.json([]);
   }
 
-  // Try Supabase
   try {
-    const { createClient } = await import("@/lib/supabase/server");
-    const supabase = await createClient();
-    const { data } = await supabase
-      .from("products")
-      .select("id, name, slug, price, images, brand:brands(name)")
-      .eq("is_active", true)
-      .ilike("name", `%${q}%`)
-      .limit(6);
+    const results = await query(
+      `
+        SELECT
+          p.id,
+          p.name,
+          p.slug,
+          p.price,
+          p.images,
+          row_to_json(b.*) AS brand
+        FROM products p
+        LEFT JOIN brands b ON b.id = p.brand_id
+        LEFT JOIN categories c ON c.id = p.category_id
+        WHERE p.is_active = TRUE
+          AND (
+            p.name ILIKE $1
+            OR b.name ILIKE $1
+            OR c.name ILIKE $1
+          )
+        ORDER BY p.created_at DESC
+        LIMIT 6
+      `,
+      [`%${q}%`]
+    );
 
-    if (data && data.length > 0) return NextResponse.json(data);
+    if (results.length > 0) return NextResponse.json(results);
   } catch {
-    // Fall back to mock
+    // Fall back to mock products for local demo mode.
   }
 
   const results = mockProducts
