@@ -23,7 +23,7 @@ npm run lint         # ESLint
 ```text
 .
 ├── AGENTS.md                 # Esta guia para agentes
-├── DIAGRAMA_APP.md           # Diagrama Mermaid simplificado de arquitectura (actualmente no trackeado)
+├── DIAGRAMA_APP.md           # Diagrama Mermaid simplificado de arquitectura
 ├── README.md                 # Documentacion general; puede tener referencias antiguas
 ├── eslint.config.mjs         # ESLint flat config + Next core-web-vitals/typescript
 ├── next.config.ts            # Config Next; remote images Supabase Storage + Unsplash
@@ -42,7 +42,18 @@ npm run lint         # ESLint
 
 - `.next/` y `node_modules/` son generadas y estan ignoradas.
 - `.chrome-debug-profile/` es local de debugging; no tocar salvo pedido explicito.
+- `supabase/.temp/` contiene estado local de Supabase CLI; no editar ni commitear.
 - `.env*`, `.mcp.json`, `next-env.d.ts`, coverage/build/out y logs estan ignorados por `.gitignore`.
+
+---
+
+## Repositorio y Git
+
+- Repositorio canonico: `https://github.com/abraham-development/ecommerce-seguridad`.
+- El remoto `origin` debe usar `https://github.com/abraham-development/ecommerce-seguridad.git` para fetch y push.
+- Rama principal: `main`.
+- `package.json` conserva por ahora el nombre interno legado `projectclaude1`; no usar ese campo para inferir el nombre del repositorio ni cambiarlo sin pedido explicito.
+- Antes de editar, revisar `git status --short` y preservar cambios ajenos o archivos no trackeados.
 
 ---
 
@@ -484,7 +495,7 @@ export async function POST(request: Request) {
 
 ## Notas actuales del mapeo
 
-- `DIAGRAMA_APP.md` existe en la raiz y esta no trackeado; contiene un diagrama Mermaid simplificado.
+- `DIAGRAMA_APP.md` esta versionado y contiene un diagrama Mermaid simplificado.
 - `README.md` puede contener referencias antiguas frente al estado actual del proyecto.
 - `@supabase/ssr` esta declarado e instalado; si aparece `Module not found: Can't resolve '@supabase/ssr'`, correr `npm install`.
 - Next puede reportar puerto 3000 ocupado si ya hay otro `next dev` corriendo.
