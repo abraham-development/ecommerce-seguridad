@@ -1,5 +1,15 @@
+import Image from "next/image";
 import type { Metadata } from "next";
-import { Shield, Award, Users, Phone, Mail, MapPin, CheckCircle } from "lucide-react";
+import {
+  Shield,
+  Award,
+  Users,
+  Phone,
+  Mail,
+  MapPin,
+  CheckCircle,
+  Camera,
+} from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Acerca de Nosotros",
@@ -11,24 +21,52 @@ export default function AcercaDeNosotrosPage() {
   return (
     <div className="min-h-screen">
       {/* Hero */}
-      <section className="relative bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] py-20">
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] py-14 sm:py-16 lg:py-20">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(37,99,235,0.12),_transparent_60%)]" />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-6">
-            <Shield className="h-8 w-8 text-[#2563EB]" />
-            <span className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider">
-              AFCR Seguridad
-            </span>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-14 items-center">
+            <div className="text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-6">
+                <Shield className="h-8 w-8 text-[#2563EB]" />
+                <span className="text-sm font-semibold text-[#2563EB] uppercase tracking-wider">
+                  AFCR Seguridad
+                </span>
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
+                Protegiendo lo que más{" "}
+                <span className="text-[#2563EB]">te importa</span>
+              </h1>
+              <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Somos especialistas en sistemas de videovigilancia y seguridad
+                electrónica. Más de 10 años de experiencia brindando soluciones
+                confiables a hogares y empresas de toda Argentina.
+              </p>
+            </div>
+
+            <figure className="relative overflow-hidden rounded-3xl border border-slate-700/70 bg-[#0F172A] shadow-2xl shadow-black/30">
+              <Image
+                src="/images/acerca-tienda-seguridad.png"
+                alt="Cámaras de seguridad, grabador y accesorios exhibidos en la tienda de AFCR Seguridad"
+                width={1536}
+                height={1024}
+                priority
+                sizes="(max-width: 1023px) 100vw, 55vw"
+                className="aspect-[16/10] w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-transparent to-transparent" />
+              <figcaption className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#0F172A]/85 p-3 text-left backdrop-blur-sm sm:inset-x-6 sm:bottom-6 sm:p-4">
+                <div className="rounded-xl bg-[#2563EB]/15 p-2.5">
+                  <Camera className="h-5 w-5 text-[#60A5FA]" />
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Tienda especializada</p>
+                  <p className="text-xs text-slate-300 sm:text-sm">
+                    Cámaras, grabadores y accesorios de seguridad
+                  </p>
+                </div>
+              </figcaption>
+            </figure>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
-            Protegiendo lo que más{" "}
-            <span className="text-[#2563EB]">te importa</span>
-          </h1>
-          <p className="text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Somos especialistas en sistemas de videovigilancia y seguridad
-            electrónica. Más de 10 años de experiencia brindando soluciones
-            confiables a hogares y empresas de toda Argentina.
-          </p>
         </div>
       </section>
 
