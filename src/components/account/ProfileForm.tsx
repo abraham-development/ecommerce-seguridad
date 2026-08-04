@@ -1,9 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Smartphone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getPeruDistricts,
+  getPeruProvinces,
+  PERU_DEPARTMENTS,
+  resolvePeruLocation,
+} from "@/lib/peru-ubigeo";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import Select from "@/components/ui/Select";
 import toast from "react-hot-toast";
 import type { Address, Profile } from "@/types";
 
@@ -13,34 +21,48 @@ interface ProfileFormProps {
 
 export default function ProfileForm({ profile }: ProfileFormProps) {
   const [saving, setSaving] = useState(false);
+  const initialUbigeo = profile.address?.ubigeo ?? "";
   const [form, setForm] = useState({
-    full_name: profile.full_name ?? "",
-    phone: profile.phone ?? "",
+    names: profile.names ?? "",
+    surnames: profile.surnames ?? "",
+    mobile: profile.mobile ?? "",
+    departmentCode: initialUbigeo.slice(0, 2),
+    provinceCode: initialUbigeo.slice(0, 4),
+    districtCode: initialUbigeo,
     street: profile.address?.street ?? "",
-    city: profile.address?.city ?? "",
-    state: profile.address?.state ?? "",
-    postal_code: profile.address?.postal_code ?? "",
-    country: profile.address?.country ?? "Argentina",
+    reference: profile.address?.reference ?? "",
   });
+  const provinces = getPeruProvinces(form.departmentCode);
+  const districts = getPeruDistricts(form.provinceCode);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
 
+    const location = resolvePeruLocation(form.districtCode);
+    if (!location) {
+      setSaving(false);
+      toast.error("Selecciona un departamento, provincia y distrito válidos");
+      return;
+    }
+
     const address: Address = {
-      street: form.street,
-      city: form.city,
-      state: form.state,
-      postal_code: form.postal_code,
-      country: form.country,
+      street: form.street.trim(),
+      reference: form.reference.trim(),
+      department: location.department.name,
+      province: location.province.name,
+      district: location.district.name,
+      ubigeo: location.district.code,
+      country: "Perú",
     };
 
     const supabase = createClient();
     const { error } = await supabase
       .from("profiles")
       .update({
-        full_name: form.full_name,
-        phone: form.phone,
+        names: form.names,
+        surnames: form.surnames,
+        mobile: form.mobile,
         address,
         updated_at: new Date().toISOString(),
       })
@@ -58,54 +80,122 @@ export default function ProfileForm({ profile }: ProfileFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Input
-          label="Nombre completo"
-          value={form.full_name}
+          label="Nombres"
+          value={form.names}
           onChange={(event) =>
-            setForm({ ...form, full_name: event.target.value })
+            setForm({ ...form, names: event.target.value })
           }
+          autoComplete="given-name"
+          required
         />
         <Input
-          label="Teléfono"
+          label="Apellidos"
+          value={form.surnames}
+          onChange={(event) =>
+            setForm({ ...form, surnames: event.target.value })
+          }
+          autoComplete="family-name"
+          required
+        />
+        <Input
+          label="Celular"
           type="tel"
-          value={form.phone}
-          onChange={(event) => setForm({ ...form, phone: event.target.value })}
+          value={form.mobile}
+          onChange={(event) => setForm({ ...form, mobile: event.target.value })}
+          leftIcon={<Smartphone className="h-4 w-4" />}
+          autoComplete="tel"
+          required
         />
       </div>
 
       <div>
         <p className="text-sm font-medium text-slate-300 mb-3">Dirección</p>
         <div className="space-y-3">
+          <Select
+            id="profile-department"
+            label="Departamento"
+            value={form.departmentCode}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                departmentCode: event.target.value,
+                provinceCode: "",
+                districtCode: "",
+              })
+            }
+            required
+          >
+            <option value="">Selecciona un departamento</option>
+            {PERU_DEPARTMENTS.map((department) => (
+              <option key={department.code} value={department.code}>
+                {department.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="profile-province"
+            label="Provincia"
+            value={form.provinceCode}
+            onChange={(event) =>
+              setForm({
+                ...form,
+                provinceCode: event.target.value,
+                districtCode: "",
+              })
+            }
+            disabled={!form.departmentCode}
+            required
+          >
+            <option value="">
+              {form.departmentCode
+                ? "Selecciona una provincia"
+                : "Primero selecciona un departamento"}
+            </option>
+            {provinces.map((province) => (
+              <option key={province.code} value={province.code}>
+                {province.name}
+              </option>
+            ))}
+          </Select>
+          <Select
+            id="profile-district"
+            label="Distrito"
+            value={form.districtCode}
+            onChange={(event) =>
+              setForm({ ...form, districtCode: event.target.value })
+            }
+            disabled={!form.provinceCode}
+            required
+          >
+            <option value="">
+              {form.provinceCode
+                ? "Selecciona un distrito"
+                : "Primero selecciona una provincia"}
+            </option>
+            {districts.map((district) => (
+              <option key={district.code} value={district.code}>
+                {district.name}
+              </option>
+            ))}
+          </Select>
           <Input
             label="Calle y número"
             value={form.street}
             onChange={(event) =>
               setForm({ ...form, street: event.target.value })
             }
+            autoComplete="street-address"
+            required
           />
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Ciudad"
-              value={form.city}
-              onChange={(event) =>
-                setForm({ ...form, city: event.target.value })
-              }
-            />
-            <Input
-              label="Provincia"
-              value={form.state}
-              onChange={(event) =>
-                setForm({ ...form, state: event.target.value })
-              }
-            />
-          </div>
           <Input
-            label="Código postal"
-            value={form.postal_code}
+            label="Referencia para ubicar su vivienda fácilmente"
+            value={form.reference}
             onChange={(event) =>
-              setForm({ ...form, postal_code: event.target.value })
+              setForm({ ...form, reference: event.target.value })
             }
+            required
           />
         </div>
       </div>

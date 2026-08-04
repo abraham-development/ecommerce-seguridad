@@ -16,7 +16,7 @@ export default async function PedidosPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-2xl font-bold text-white mb-8">Mis pedidos</h1>
 
       {orders.length === 0 ? (
@@ -33,10 +33,10 @@ export default async function PedidosPage() {
             <Link
               key={order.id}
               href={`/cuenta/pedidos/${order.id}`}
-              className="block bg-[#1E293B] border border-slate-700 rounded-xl p-5 hover:border-[#2563EB]/50 transition-colors"
+              className="block rounded-xl border border-slate-700 bg-[#1E293B] p-4 transition-colors hover:border-[#2563EB]/50 sm:p-5"
             >
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex flex-col gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
+                <div className="min-w-0">
                   <p className="font-semibold text-white">
                     Pedido #{order.id.slice(0, 8).toUpperCase()}
                   </p>
@@ -48,7 +48,7 @@ export default async function PedidosPage() {
                     })}
                   </p>
                 </div>
-                <div className="text-right space-y-1">
+                <div className="space-y-1 min-[420px]:text-right">
                   <p className="font-bold text-white">{formatPrice(order.total)}</p>
                   <Badge className={getOrderStatusColor(order.status)} variant="ghost">
                     {getOrderStatusLabel(order.status)}

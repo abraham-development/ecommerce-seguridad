@@ -28,14 +28,14 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-8 flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
         <h1 className="text-2xl font-bold text-white">
           Carrito ({items.reduce((s, i) => s + i.quantity, 0)} items)
         </h1>
         <button
           onClick={clearCart}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-red-400 transition-colors"
+          className="flex min-h-10 items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-red-400"
         >
           <Trash2 className="h-4 w-4" />
           Vaciar carrito
@@ -54,7 +54,7 @@ export default function CartPage() {
 
         {/* Summary */}
         <div className="lg:col-span-1">
-          <div className="bg-[#1E293B] rounded-xl p-6 space-y-4 sticky top-24">
+          <div className="space-y-4 rounded-xl bg-[#1E293B] p-4 sm:p-6 lg:sticky lg:top-32">
             <h2 className="text-lg font-semibold text-white">Resumen</h2>
 
             {items.map((item) => (

@@ -31,9 +31,9 @@ function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Link href={`/productos/${product.slug}`} className="group block">
-      <div className="bg-[#1E293B] rounded-xl overflow-hidden border border-slate-700/50 hover:border-[#2563EB]/50 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
+      <div className="h-full overflow-hidden rounded-xl border border-slate-700/50 bg-[#1E293B] transition-all duration-300 hover:border-[#2563EB]/50 hover:shadow-lg hover:shadow-blue-500/10">
         {/* Image */}
-        <div className="relative h-52 bg-slate-800 overflow-hidden">
+        <div className="relative h-48 overflow-hidden bg-slate-800 sm:h-52">
           <Image
             src={imageUrl}
             alt={product.name}
@@ -58,7 +58,7 @@ function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           {(product.brand || product.category) && (
             <div className="flex items-center gap-2 mb-1">
               {product.brand && (
@@ -84,9 +84,9 @@ function ProductCard({ product }: ProductCardProps) {
             </p>
           )}
 
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-xl font-bold text-white">
+          <div className="flex items-end justify-between gap-2">
+            <div className="min-w-0">
+              <p className="truncate text-lg font-bold text-white sm:text-xl">
                 {formatPrice(product.price)}
               </p>
               <p className="text-xs text-slate-500">IVA incluido</p>
@@ -95,10 +95,10 @@ function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={product.stock === 0}
-              className="flex items-center gap-1.5 bg-[#2563EB] hover:bg-blue-700 disabled:bg-slate-600 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+              className="flex min-h-10 flex-shrink-0 items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-600"
             >
               <ShoppingCart className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Agregar</span>
+              <span className="hidden min-[560px]:inline">Agregar</span>
             </button>
           </div>
         </div>

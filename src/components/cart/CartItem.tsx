@@ -21,8 +21,8 @@ function CartItem({ item }: CartItemProps) {
     `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#1E293B"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="28" fill="#2563EB">${label}</text></svg>`)}`;
 
   return (
-    <li className="flex gap-3 bg-[#0F172A] rounded-xl p-3">
-      <div className="relative h-20 w-20 rounded-lg overflow-hidden flex-shrink-0 bg-slate-800">
+    <li className="flex gap-3 rounded-xl bg-[#0F172A] p-3">
+      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-slate-800 min-[380px]:h-20 min-[380px]:w-20">
         <Image
           src={imageUrl}
           alt={product.name}
@@ -43,7 +43,7 @@ function CartItem({ item }: CartItemProps) {
           {formatPrice(product.price)}
         </p>
 
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2 bg-slate-800 rounded-lg">
             <button
               onClick={() => updateQuantity(product.id, quantity - 1)}

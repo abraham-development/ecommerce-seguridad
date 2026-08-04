@@ -25,6 +25,9 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const redirect = getSafeRedirectPath(searchParams.get("redirect"));
   const oauthRedirect = redirect ?? USER_DASHBOARD_PATH;
+  const recoveryHref = redirect
+    ? `/recuperar-contrasena?next=${encodeURIComponent(redirect)}`
+    : "/recuperar-contrasena";
   const errorMessage = loginErrors[searchParams.get("error") ?? ""];
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -41,9 +44,13 @@ export default function LoginPage() {
     });
 
     if (error) {
-      toast.error(error.message === "Invalid login credentials"
-        ? "Credenciales incorrectas"
-        : error.message);
+      toast.error(
+        error.code === "email_not_confirmed"
+          ? "Confirmá tu correo con el código que te enviamos."
+          : error.message === "Invalid login credentials"
+            ? "Credenciales incorrectas"
+            : error.message
+      );
       setLoading(false);
       return;
     }
@@ -70,7 +77,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -83,7 +90,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-[#1E293B] rounded-2xl p-8 border border-slate-700">
+        <div className="rounded-2xl border border-slate-700 bg-[#1E293B] p-4 min-[380px]:p-6 sm:p-8">
           {errorMessage ? (
             <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
               {errorMessage}
@@ -113,6 +120,21 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
             />
+
+            <div className="flex flex-col items-end justify-between gap-1 min-[380px]:flex-row min-[380px]:items-center">
+              <Link
+                href="/verificar-email"
+                className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-slate-400 hover:text-white"
+              >
+                Ya tengo un código
+              </Link>
+              <Link
+                href={recoveryHref}
+                className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-[#60A5FA] hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
 
             <Button type="submit" loading={loading} className="w-full" size="lg">
               Ingresar

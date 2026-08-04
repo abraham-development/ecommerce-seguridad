@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import Badge from "@/components/ui/Badge";
-import { getOrderStatusLabel, getOrderStatusColor, formatPrice } from "@/lib/utils";
+import {
+  formatPersonName,
+  formatPrice,
+  getOrderStatusColor,
+  getOrderStatusLabel,
+} from "@/lib/utils";
 
 export default async function AdminPedidosPage() {
   let orders: Record<string, unknown>[] = [];
@@ -9,7 +14,7 @@ export default async function AdminPedidosPage() {
     const supabase = await createClient();
     const { data } = await supabase
       .from("orders")
-      .select("*, profile:profiles(full_name)")
+      .select("*, profile:profiles(names, surnames)")
       .order("created_at", { ascending: false })
       .limit(50);
     orders = (data as Record<string, unknown>[]) ?? [];
@@ -22,12 +27,12 @@ export default async function AdminPedidosPage() {
       <h1 className="text-2xl font-bold text-white mb-6">Pedidos</h1>
 
       {orders.length === 0 ? (
-        <div className="bg-[#1E293B] rounded-xl p-12 border border-slate-700 text-center text-slate-400">
+        <div className="rounded-xl border border-slate-700 bg-[#1E293B] p-8 text-center text-slate-400 sm:p-12">
           No hay pedidos aún
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-700">
-          <table className="w-full">
+          <table className="w-full min-w-[680px]">
             <thead className="bg-[#1E293B] border-b border-slate-700">
               <tr>
                 {["ID", "Cliente", "Total", "Estado", "Fecha"].map((h) => (
@@ -47,7 +52,10 @@ export default async function AdminPedidosPage() {
                     #{(order.id as string).slice(0, 8).toUpperCase()}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-300">
-                    {((order.profile as Record<string, unknown>)?.full_name as string) ?? "—"}
+                    {formatPersonName(
+                      (order.profile as Record<string, unknown>)?.names as string,
+                      (order.profile as Record<string, unknown>)?.surnames as string
+                    ) || "—"}
                   </td>
                   <td className="px-4 py-3 text-sm font-medium text-white">
                     {formatPrice(order.total as number)}

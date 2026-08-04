@@ -7,11 +7,11 @@ export default async function AdminProductosPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col items-start gap-3 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between">
         <h1 className="text-2xl font-bold text-white">Productos</h1>
         <Link
           href="/admin/productos/nuevo"
-          className="px-4 py-2 bg-[#2563EB] hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          className="flex min-h-10 w-full items-center justify-center rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 min-[420px]:w-auto"
         >
           + Nuevo producto
         </Link>

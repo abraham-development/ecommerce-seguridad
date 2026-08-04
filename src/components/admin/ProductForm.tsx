@@ -144,7 +144,7 @@ export default function ProductForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Precio (ARS) *"
               type="number"
@@ -164,7 +164,7 @@ export default function ProductForm({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-1.5">
                 Categoría
@@ -269,14 +269,15 @@ export default function ProductForm({
         </div>
       </div>
 
-      <div className="flex gap-3 pt-4 border-t border-slate-700">
-        <Button type="submit" loading={saving}>
+      <div className="flex flex-col gap-3 border-t border-slate-700 pt-4 min-[420px]:flex-row">
+        <Button type="submit" loading={saving} className="w-full min-[420px]:w-auto">
           {isEditing ? "Actualizar producto" : "Crear producto"}
         </Button>
         <Button
           type="button"
           variant="ghost"
           onClick={() => router.push("/admin/productos")}
+          className="w-full min-[420px]:w-auto"
         >
           Cancelar
         </Button>

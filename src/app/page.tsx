@@ -13,19 +13,19 @@ export default async function HomePage() {
     <div className="min-h-screen">
       {/* Hero */}
       <section className="bg-[#0F172A] border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="max-w-7xl mx-auto px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-28">
           <div className="max-w-2xl">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
+            <h1 className="text-3xl font-bold leading-tight text-white min-[420px]:text-4xl sm:text-5xl lg:text-6xl mb-5">
               Tu hogar y negocio{" "}
               <span className="text-[#2563EB]">siempre protegidos</span>
             </h1>
-            <p className="text-lg text-slate-400 leading-relaxed mb-8">
+            <p className="mb-8 text-base leading-relaxed text-slate-400 sm:text-lg">
               Especialistas en sistemas de videovigilancia. Cámaras IP, domo,
               PTZ, NVR/DVR y accesorios de Hikvision, Dahua, Axis, Reolink y más.
             </p>
             <Link
               href="/productos"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#2563EB] hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 min-[420px]:w-auto"
             >
               Ver todos los productos
               <ChevronRight className="h-4 w-4" />
@@ -35,9 +35,9 @@ export default async function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="bg-[#1E293B] py-12 border-y border-slate-700/50">
+      <section className="border-y border-slate-700/50 bg-[#1E293B] py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-6">
             {[
               {
                 icon: <Camera className="h-6 w-6 text-[#2563EB]" />,
@@ -70,8 +70,8 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex items-center justify-between mb-8">
+      <section className="max-w-7xl mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-white">Categorías</h2>
           <Link
             href="/productos"
@@ -80,7 +80,7 @@ export default async function HomePage() {
             Ver todo <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
           {categories.map((cat) => (
             <Link
               key={cat.id}
@@ -105,8 +105,8 @@ export default async function HomePage() {
       </section>
 
       {/* Featured Products */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-20">
-        <div className="flex items-center justify-between mb-8">
+      <section className="max-w-7xl mx-auto px-4 py-4 pb-14 sm:px-6 sm:pb-20 lg:px-8">
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-2xl font-bold text-white">Productos destacados</h2>
           <Link
             href="/productos"

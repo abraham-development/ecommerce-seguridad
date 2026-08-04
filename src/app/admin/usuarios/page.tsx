@@ -20,15 +20,15 @@ export default async function AdminUsuariosPage() {
       <h1 className="text-2xl font-bold text-white mb-6">Usuarios</h1>
 
       {profiles.length === 0 ? (
-        <div className="bg-[#1E293B] rounded-xl p-12 border border-slate-700 text-center text-slate-400">
+        <div className="rounded-xl border border-slate-700 bg-[#1E293B] p-8 text-center text-slate-400 sm:p-12">
           No hay usuarios registrados
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-700">
-          <table className="w-full">
+          <table className="w-full min-w-[760px]">
             <thead className="bg-[#1E293B] border-b border-slate-700">
               <tr>
-                {["Nombre", "Teléfono", "Rol", "Registro"].map((h) => (
+                {["Nombres", "Apellidos", "Celular", "Rol", "Registro"].map((h) => (
                   <th
                     key={h}
                     className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider"
@@ -42,10 +42,13 @@ export default async function AdminUsuariosPage() {
               {profiles.map((p) => (
                 <tr key={p.id as string} className="hover:bg-[#1E293B]/50 transition-colors">
                   <td className="px-4 py-3 text-sm text-white">
-                    {(p.full_name as string) ?? "—"}
+                    {(p.names as string) ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-slate-300">
+                    {(p.surnames as string) ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-sm text-slate-400">
-                    {(p.phone as string) ?? "—"}
+                    {(p.mobile as string) ?? "—"}
                   </td>
                   <td className="px-4 py-3">
                     <Badge

@@ -1,5 +1,7 @@
 export type UserRole = "user" | "admin";
 
+export type ShippingMethod = "lima_delivery" | "urbano_pickup";
+
 export type OrderStatus =
   | "pending"
   | "confirmed"
@@ -11,17 +13,29 @@ export type OrderStatus =
 
 export interface Address {
   street: string;
-  city: string;
-  state: string;
-  postal_code: string;
+  reference: string;
+  department: string;
+  province: string;
+  district: string;
+  ubigeo: string;
   country: string;
+}
+
+export interface ShippingAddress extends Address {
+  names: string;
+  surnames: string;
+  mobile: string;
+  shippingMethod?: ShippingMethod;
+  pickupPointId?: string;
+  pickupPointName?: string;
 }
 
 export interface Profile {
   id: string;
   email: string | null;
-  full_name: string | null;
-  phone: string | null;
+  names: string | null;
+  surnames: string | null;
+  mobile: string | null;
   address: Address | null;
   role: UserRole;
   created_at: string;
@@ -92,7 +106,7 @@ export interface Order {
   user_id: string;
   status: OrderStatus;
   total: number;
-  shipping_address: Address;
+  shipping_address: ShippingAddress;
   created_at: string;
   updated_at: string;
   // Joins

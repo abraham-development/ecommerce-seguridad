@@ -3,17 +3,24 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Shield, Mail, Lock, User } from "lucide-react";
+import { Lock, Mail, Shield, Smartphone, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
+import {
+  AUTH_STORAGE_KEYS,
+  MIN_PASSWORD_LENGTH,
+  normalizeEmail,
+} from "@/lib/auth-email";
 import { getLocalSafeOrigin } from "@/lib/auth-routing";
 import toast from "react-hot-toast";
 
 export default function RegistroPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    full_name: "",
+    names: "",
+    surnames: "",
+    mobile: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -28,19 +35,26 @@ export default function RegistroPage() {
       toast.error("Las contraseñas no coinciden");
       return;
     }
-    if (form.password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
+    if (form.password.length < MIN_PASSWORD_LENGTH) {
+      toast.error(
+        `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`
+      );
       return;
     }
 
     setLoading(true);
     const supabase = createClient();
+    const email = normalizeEmail(form.email);
 
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
+    const { data, error } = await supabase.auth.signUp({
+      email,
       password: form.password,
       options: {
-        data: { full_name: form.full_name },
+        data: {
+          names: form.names,
+          surnames: form.surnames,
+          mobile: form.mobile,
+        },
       },
     });
 
@@ -50,8 +64,20 @@ export default function RegistroPage() {
       return;
     }
 
-    toast.success("¡Cuenta creada! Revisá tu email para confirmar.");
-    router.push("/login");
+    if (data.session) {
+      toast.success("¡Cuenta creada correctamente!");
+      router.push("/api/auth/role-redirect?next=/cuenta");
+      router.refresh();
+      return;
+    }
+
+    sessionStorage.setItem(AUTH_STORAGE_KEYS.pendingVerificationEmail, email);
+    sessionStorage.setItem(
+      AUTH_STORAGE_KEYS.verificationSentAt,
+      String(Date.now())
+    );
+    toast.success("Te enviamos un código para confirmar tu correo.");
+    router.push("/verificar-email?next=/cuenta");
   };
 
   const handleGoogleRegister = async () => {
@@ -84,7 +110,7 @@ export default function RegistroPage() {
           </p>
         </div>
 
-        <div className="bg-[#1E293B] rounded-2xl p-8 border border-slate-700">
+        <div className="rounded-2xl border border-slate-700 bg-[#1E293B] p-4 min-[380px]:p-6 sm:p-8">
           <button
             type="button"
             onClick={handleGoogleRegister}
@@ -115,13 +141,40 @@ export default function RegistroPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
-              label="Nombre completo"
+              label="Nombres"
               type="text"
-              id="full_name"
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              id="names"
+              value={form.names}
+              onChange={(e) =>
+                setForm({ ...form, names: e.target.value })
+              }
               leftIcon={<User className="h-4 w-4" />}
-              placeholder="Juan Pérez"
+              placeholder="Juan Carlos"
+              autoComplete="given-name"
+              required
+            />
+            <Input
+              label="Apellidos"
+              type="text"
+              id="surnames"
+              value={form.surnames}
+              onChange={(e) =>
+                setForm({ ...form, surnames: e.target.value })
+              }
+              leftIcon={<User className="h-4 w-4" />}
+              placeholder="Pérez García"
+              autoComplete="family-name"
+              required
+            />
+            <Input
+              label="Celular"
+              type="tel"
+              id="mobile"
+              value={form.mobile}
+              onChange={(e) => setForm({ ...form, mobile: e.target.value })}
+              leftIcon={<Smartphone className="h-4 w-4" />}
+              placeholder="+51 999 999 999"
+              autoComplete="tel"
               required
             />
             <Input
@@ -133,6 +186,7 @@ export default function RegistroPage() {
               leftIcon={<Mail className="h-4 w-4" />}
               placeholder="tu@email.com"
               required
+              autoComplete="email"
             />
             <Input
               label="Contraseña"
@@ -141,8 +195,10 @@ export default function RegistroPage() {
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               leftIcon={<Lock className="h-4 w-4" />}
-              placeholder="Mínimo 6 caracteres"
+              placeholder={`Mínimo ${MIN_PASSWORD_LENGTH} caracteres`}
               required
+              minLength={MIN_PASSWORD_LENGTH}
+              autoComplete="new-password"
             />
             <Input
               label="Confirmar contraseña"
@@ -155,6 +211,8 @@ export default function RegistroPage() {
               leftIcon={<Lock className="h-4 w-4" />}
               placeholder="Repetí tu contraseña"
               required
+              minLength={MIN_PASSWORD_LENGTH}
+              autoComplete="new-password"
             />
 
             <Button type="submit" loading={loading} className="w-full" size="lg">

@@ -3,7 +3,15 @@
 import { useSyncExternalStore, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, ShoppingCart } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Shield,
+  ShoppingCart,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useCartStore } from "@/store/cart";
 import type { User } from "@supabase/supabase-js";
 import { isAdminAccount } from "@/lib/auth-routing";
@@ -17,6 +25,7 @@ const NAV_LINKS = [
 
 export default function Header() {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
   const { totalItems } = useCartStore();
   const itemCount = totalItems();
   const mounted = useSyncExternalStore(
@@ -30,60 +39,80 @@ export default function Header() {
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
+    let active = true;
+    let authRevision = 0;
     let subscription: { unsubscribe: () => void } | null = null;
+    const scheduledAuthSyncs = new Set<number>();
 
     const checkAuth = async () => {
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
 
-        // Initial check
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUser(user);
+        const syncAccountState = async (nextUser: User | null) => {
+          const revision = ++authRevision;
+
+          if (!active) return;
+
+          setUser(nextUser);
+          setIsAdmin(false);
+
+          if (!nextUser) return;
+
           const { data: profile } = await supabase
             .from("profiles")
             .select("role")
-            .eq("id", user.id)
+            .eq("id", nextUser.id)
             .single();
-          setIsAdmin(isAdminAccount(profile?.role, user.email));
-        } else {
-          setUser(null);
-          setIsAdmin(false);
-        }
+
+          if (!active || revision !== authRevision) return;
+
+          setIsAdmin(isAdminAccount(profile?.role, nextUser.email));
+        };
+
+        // Initial check
+        const { data: { user } } = await supabase.auth.getUser();
+        await syncAccountState(user);
+        if (!active) return;
         setAuthChecked(true);
 
-        // Auth listener
+        // Supabase can deadlock when its async APIs are awaited directly inside
+        // onAuthStateChange. Defer profile synchronization until Auth releases
+        // its internal lock.
         const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            if (session?.user) {
-              setUser(session.user);
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", session.user.id)
-                .single();
-              setIsAdmin(isAdminAccount(profile?.role, session.user.email));
-            } else {
-              setUser(null);
-              setIsAdmin(false);
-            }
+          (_event, session) => {
+            const timeoutId = window.setTimeout(() => {
+              scheduledAuthSyncs.delete(timeoutId);
+              void syncAccountState(session?.user ?? null).catch(() => {
+                if (active) setIsAdmin(false);
+              });
+            }, 0);
+
+            scheduledAuthSyncs.add(timeoutId);
           }
         );
         subscription = sub;
       } catch {
-        setAuthChecked(true);
+        if (active) setAuthChecked(true);
       }
     };
 
-    checkAuth();
+    void checkAuth();
 
     return () => {
+      active = false;
+      authRevision += 1;
+      scheduledAuthSyncs.forEach((timeoutId) => window.clearTimeout(timeoutId));
+      scheduledAuthSyncs.clear();
       if (subscription) {
         subscription.unsubscribe();
       }
     };
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -95,15 +124,15 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-              <Shield className="h-7 w-7 text-[#2563EB]" />
-              <span className="font-bold text-white text-lg">
+            <Link href="/" className="flex min-w-0 items-center gap-2">
+              <Shield className="h-7 w-7 flex-shrink-0 text-[#2563EB]" />
+              <span className="truncate text-base font-bold text-white min-[380px]:text-lg">
                 AFCR <span className="text-[#2563EB]">Tecnologia</span>
               </span>
             </Link>
 
-            {/* Auth buttons / User actions */}
-            <div className="flex items-center gap-2">
+            {/* Desktop auth buttons / User actions */}
+            <div className="hidden items-center gap-2 md:flex">
               {mounted && authChecked && user ? (
                 <>
                   {isAdmin && (
@@ -146,14 +175,40 @@ export default function Header() {
                 )
               )}
             </div>
+
+            {/* Mobile actions */}
+            <div className="ml-3 flex flex-shrink-0 items-center gap-1 md:hidden">
+              <Link
+                href="/carrito"
+                className="relative flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white"
+                aria-label="Ver carrito"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {mounted && itemCount > 0 && (
+                  <span className="absolute right-0.5 top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F97316] px-1 text-[10px] font-bold text-white">
+                    {itemCount > 9 ? "9+" : itemCount}
+                  </span>
+                )}
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white"
+                aria-expanded={menuOpen}
+                aria-controls="mobile-navigation"
+                aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
+              >
+                {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Nav bar */}
-      <nav className="bg-[#0F172A] border-b border-slate-700/50">
+      {/* Desktop nav bar */}
+      <nav className="hidden bg-[#0F172A] border-b border-slate-700/50 md:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center overflow-x-auto gap-1 h-11">
+          <div className="flex h-11 items-center gap-1 overflow-x-auto">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -182,6 +237,76 @@ export default function Header() {
           </div>
         </div>
       </nav>
+
+      {/* Mobile navigation */}
+      {menuOpen && (
+        <nav
+          id="mobile-navigation"
+          className="border-b border-slate-700 bg-[#0F172A] px-4 py-4 md:hidden"
+        >
+          <div className="mx-auto max-w-7xl space-y-1">
+            {NAV_LINKS.filter((link) => link.href !== "/carrito").map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex min-h-11 items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  isActive(link.href)
+                    ? "bg-[#2563EB]/15 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                {link.label}
+              </Link>
+            ))}
+
+            <div className="my-3 border-t border-slate-700" />
+
+            {mounted && authChecked ? (
+              user ? (
+                <div className="space-y-1">
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-blue-300 hover:bg-blue-500/10"
+                    >
+                      <LayoutDashboard className="h-4 w-4" /> Panel Admin
+                    </Link>
+                  )}
+                  <Link
+                    href="/cuenta"
+                    className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white"
+                  >
+                    <UserRound className="h-4 w-4" /> Mi Cuenta
+                  </Link>
+                  <a
+                    href="/api/auth/signout"
+                    className="flex min-h-11 items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-red-400 hover:bg-red-900/20 hover:text-red-300"
+                  >
+                    <LogOut className="h-4 w-4" /> Cerrar Sesión
+                  </a>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+                  <Link
+                    href="/login"
+                    className="flex min-h-11 items-center justify-center rounded-lg border border-[#2563EB] px-4 py-2 text-sm font-medium text-[#60A5FA]"
+                  >
+                    Iniciar Sesión
+                  </Link>
+                  <Link
+                    href="/registro"
+                    className="flex min-h-11 items-center justify-center rounded-lg bg-[#2563EB] px-4 py-2 text-sm font-medium text-white"
+                  >
+                    Registrarse
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="h-11 animate-pulse rounded-lg bg-slate-800" />
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

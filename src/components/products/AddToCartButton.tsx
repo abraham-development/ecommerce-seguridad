@@ -24,8 +24,8 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
   if (product.stock === 0) return null;
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 bg-[#1E293B] border border-slate-700 rounded-lg">
+    <div className="flex flex-col gap-3 min-[420px]:flex-row min-[420px]:items-center">
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-slate-700 bg-[#1E293B] min-[420px]:justify-start">
         <button
           onClick={() => setQuantity(Math.max(1, quantity - 1))}
           className="px-3 py-2 text-slate-400 hover:text-white transition-colors text-lg"

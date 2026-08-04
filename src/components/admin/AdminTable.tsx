@@ -36,7 +36,7 @@ export default function AdminTable<T extends { id: string }>({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-700">
-      <table className="w-full">
+      <table className="w-full min-w-[720px]">
         <thead className="bg-[#1E293B] border-b border-slate-700">
           <tr>
             {columns.map((col) => (

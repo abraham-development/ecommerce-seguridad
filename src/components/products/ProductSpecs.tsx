@@ -32,7 +32,7 @@ export default function ProductSpecs({ specs }: ProductSpecsProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="bg-[#1E293B] rounded-xl p-6">
+    <div className="rounded-xl bg-[#1E293B] p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-white mb-4">
         Especificaciones Técnicas
       </h3>
@@ -40,10 +40,10 @@ export default function ProductSpecs({ specs }: ProductSpecsProps) {
         <tbody className="divide-y divide-slate-700/50">
           {entries.map(([key, value]) => (
             <tr key={key} className="group">
-              <td className="py-2.5 pr-4 text-sm text-slate-400 font-medium w-2/5">
+              <td className="w-1/2 py-2.5 pr-3 align-top text-xs font-medium text-slate-400 sm:w-2/5 sm:pr-4 sm:text-sm">
                 {specLabels[key] ?? key}
               </td>
-              <td className="py-2.5 text-sm text-white">
+              <td className="break-words py-2.5 text-xs text-white sm:text-sm">
                 {typeof value === "boolean"
                   ? value
                     ? "Sí"

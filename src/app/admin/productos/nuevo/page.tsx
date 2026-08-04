@@ -9,8 +9,8 @@ export default async function NuevoProductoPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-8">Nuevo producto</h1>
-      <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700">
+      <h1 className="mb-6 text-2xl font-bold text-white sm:mb-8">Nuevo producto</h1>
+      <div className="rounded-xl border border-slate-700 bg-[#1E293B] p-4 sm:p-6">
         <ProductForm categories={categories} brands={brands} />
       </div>
     </div>

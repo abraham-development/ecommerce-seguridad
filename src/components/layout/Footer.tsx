@@ -1,10 +1,17 @@
 import Link from "next/link";
-import { Shield, Phone, Mail, MapPin, Instagram, Facebook } from "lucide-react";
+import {
+  Shield,
+  Smartphone,
+  Mail,
+  MapPin,
+  Instagram,
+  Facebook,
+} from "lucide-react";
 
 export default function Footer() {
   return (
     <footer className="bg-[#1E293B] border-t border-slate-700/50 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
@@ -97,7 +104,7 @@ export default function Footer() {
                 <span>Buenos Aires, Argentina</span>
               </li>
               <li className="flex items-center gap-2 text-sm text-slate-400">
-                <Phone className="h-4 w-4 text-[#2563EB] flex-shrink-0" />
+                <Smartphone className="h-4 w-4 text-[#2563EB] flex-shrink-0" />
                 <a href="tel:+541100000000" className="hover:text-white transition-colors">
                   +54 11 0000-0000
                 </a>
@@ -106,7 +113,7 @@ export default function Footer() {
                 <Mail className="h-4 w-4 text-[#2563EB] flex-shrink-0" />
                 <a
                   href="mailto:info@afcrseguridad.com"
-                  className="hover:text-white transition-colors"
+                  className="break-all hover:text-white transition-colors"
                 >
                   info@afcrseguridad.com
                 </a>
@@ -115,11 +122,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-slate-700/50 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-slate-500">
+        <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-700/50 pt-6 text-center sm:flex-row sm:text-left">
+          <p className="text-xs leading-relaxed text-slate-500">
             © {new Date().getFullYear()} AFCR Seguridad. Todos los derechos reservados.
           </p>
-          <div className="flex gap-4 text-xs text-slate-500">
+          <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs text-slate-500 sm:justify-end">
             <Link href="#" className="hover:text-white transition-colors">
               Términos y Condiciones
             </Link>

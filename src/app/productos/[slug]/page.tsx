@@ -39,9 +39,9 @@ export default async function ProductDetailPage({ params }: PageProps) {
   const related = await getRelatedProducts(product);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-slate-400 mb-6 flex items-center gap-2">
+      <nav className="mb-6 flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-2 text-sm text-slate-400">
         <Link href="/" className="hover:text-white transition-colors">Inicio</Link>
         <span>/</span>
         <Link href="/productos" className="hover:text-white transition-colors">Productos</Link>
@@ -57,10 +57,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </>
         )}
         <span>/</span>
-        <span className="text-slate-300 line-clamp-1">{product.name}</span>
+        <span className="max-w-[14rem] truncate text-slate-300 sm:max-w-md">{product.name}</span>
       </nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-16">
+      <div className="mb-12 grid grid-cols-1 gap-8 lg:mb-16 lg:grid-cols-2 lg:gap-10">
         {/* Gallery */}
         <ProductGallery images={product.images} productName={product.name} />
 
@@ -77,8 +77,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-bold text-white">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-2xl font-bold text-white sm:text-3xl">
               {formatPrice(product.price)}
             </span>
             {product.stock > 0 ? (
@@ -98,7 +98,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
           {/* Quick specs */}
           {Object.keys(product.specs).length > 0 && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
               {Object.entries(product.specs)
                 .slice(0, 4)
                 .map(([key, value]) => (
@@ -116,7 +116,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           <AddToCartButton product={product} />
 
           {/* Trust badges */}
-          <div className="border-t border-slate-700 pt-4 grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 border-t border-slate-700 pt-4 min-[420px]:grid-cols-3">
             {[
               { icon: <Shield className="h-4 w-4 text-[#2563EB]" />, label: "Garantía oficial" },
               { icon: <Truck className="h-4 w-4 text-[#2563EB]" />, label: "Envío a todo el país" },
@@ -133,7 +133,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
       {/* Specs table */}
       {Object.keys(product.specs).length > 0 && (
-        <div className="mb-16">
+        <div className="mb-12 sm:mb-16">
           <ProductSpecs specs={product.specs} />
         </div>
       )}

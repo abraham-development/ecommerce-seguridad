@@ -59,13 +59,13 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-8">Dashboard</h1>
+      <h1 className="mb-6 text-2xl font-bold text-white sm:mb-8">Dashboard</h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
         {cards.map((card) => (
           <div
             key={card.label}
-            className="bg-[#1E293B] rounded-xl p-6 border border-slate-700"
+            className="rounded-xl border border-slate-700 bg-[#1E293B] p-4 sm:p-6"
           >
             <div className={`inline-flex p-3 rounded-xl ${card.bg} mb-4`}>
               {card.icon}
@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="bg-[#1E293B] rounded-xl p-6 border border-slate-700">
+      <div className="rounded-xl border border-slate-700 bg-[#1E293B] p-4 sm:p-6">
         <h2 className="font-semibold text-white mb-4">Acciones rápidas</h2>
         <div className="flex flex-wrap gap-3">
           <a

@@ -3,7 +3,12 @@ import { Package, User, LogOut } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getCurrentAccount, getUserOrders } from "@/lib/supabase/data";
 import { isAdminAccount } from "@/lib/auth-routing";
-import { formatPrice, getOrderStatusLabel, getOrderStatusColor } from "@/lib/utils";
+import {
+  formatPersonName,
+  formatPrice,
+  getOrderStatusColor,
+  getOrderStatusLabel,
+} from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 
 export default async function CuentaPage() {
@@ -20,11 +25,14 @@ export default async function CuentaPage() {
     redirect("/admin");
   }
 
-  const displayName =
-    account.profile?.full_name ?? account.user.email ?? "Mi cuenta";
+  const profileName = formatPersonName(
+    account.profile?.names,
+    account.profile?.surnames
+  );
+  const displayName = profileName || account.user.email || "Mi cuenta";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <h1 className="text-2xl font-bold text-white mb-8">Mi cuenta</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -34,9 +42,9 @@ export default async function CuentaPage() {
             <div className="h-12 w-12 rounded-full bg-[#2563EB]/20 flex items-center justify-center">
               <User className="h-6 w-6 text-[#2563EB]" />
             </div>
-            <div>
-              <p className="font-semibold text-white">{displayName}</p>
-              <p className="text-sm text-slate-400">{account.user.email}</p>
+            <div className="min-w-0">
+              <p className="truncate font-semibold text-white">{displayName}</p>
+              <p className="break-all text-sm text-slate-400">{account.user.email}</p>
             </div>
           </div>
 
@@ -63,8 +71,8 @@ export default async function CuentaPage() {
         </div>
 
         {/* Recent orders */}
-        <div className="md:col-span-2 bg-[#1E293B] rounded-xl p-6 border border-slate-700">
-          <div className="flex items-center justify-between mb-4">
+        <div className="rounded-xl border border-slate-700 bg-[#1E293B] p-4 sm:p-6 md:col-span-2">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-semibold text-white">Últimos pedidos</h2>
             <Link href="/cuenta/pedidos" className="text-sm text-[#2563EB] hover:underline">
               Ver todos
@@ -76,7 +84,7 @@ export default async function CuentaPage() {
               <li key={order.id}>
                 <Link
                   href={`/cuenta/pedidos/${order.id}`}
-                  className="flex items-center justify-between p-3 bg-[#0F172A] rounded-lg hover:bg-slate-800 transition-colors"
+                  className="flex flex-col gap-3 rounded-lg bg-[#0F172A] p-3 transition-colors hover:bg-slate-800 min-[420px]:flex-row min-[420px]:items-center min-[420px]:justify-between"
                 >
                   <div>
                     <p className="text-sm font-medium text-white">
@@ -86,7 +94,7 @@ export default async function CuentaPage() {
                       {new Date(order.created_at).toLocaleDateString("es-AR")}
                     </p>
                   </div>
-                  <div className="text-right space-y-1">
+                  <div className="space-y-1 min-[420px]:text-right">
                     <p className="text-sm font-medium text-white">
                       {formatPrice(order.total)}
                     </p>

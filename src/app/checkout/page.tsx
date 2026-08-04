@@ -39,7 +39,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-3xl mx-auto px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <h1 className="text-2xl font-bold text-white mb-8 text-center">
         Finalizar compra
       </h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Input from "@/components/ui/Input";
@@ -27,7 +28,9 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
     });
     if (error) {
       toast.error(
-        error.message === "Invalid login credentials"
+        error.code === "email_not_confirmed"
+          ? "Confirmá tu correo con el código que te enviamos."
+          : error.message === "Invalid login credentials"
           ? "Credenciales incorrectas"
           : error.message
       );
@@ -62,6 +65,20 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
         required
         autoComplete="current-password"
       />
+      <div className="flex flex-col items-end justify-between gap-1 min-[380px]:flex-row min-[380px]:items-center">
+        <Link
+          href="/verificar-email?next=/checkout"
+          className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-slate-400 hover:text-white"
+        >
+          Ya tengo un código
+        </Link>
+        <Link
+          href="/recuperar-contrasena?next=/checkout"
+          className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-[#60A5FA] hover:underline"
+        >
+          ¿Olvidaste tu contraseña?
+        </Link>
+      </div>
       <Button type="submit" loading={loading} className="w-full" size="lg">
         Ingresar y continuar
         <ArrowRight className="h-4 w-4" />

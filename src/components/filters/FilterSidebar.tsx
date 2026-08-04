@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
+import { SlidersHorizontal } from "lucide-react";
 import type { Category, Brand } from "@/types";
 
 interface FilterSidebarProps {
@@ -67,8 +68,8 @@ export default function FilterSidebar({
     minPrice ||
     maxPrice;
 
-  return (
-    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6">
+  const filterControls = (
+    <div className="space-y-6">
       {hasFilters && (
         <div className="flex justify-end">
           <button
@@ -150,6 +151,26 @@ export default function FilterSidebar({
           />
         </div>
       </div>
+    </div>
+  );
+
+  return (
+    <aside className="w-full flex-shrink-0 lg:w-64">
+      <details className="group rounded-xl border border-slate-700 bg-[#1E293B] lg:hidden">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-white [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-[#60A5FA]" />
+            Filtros
+          </span>
+          {hasFilters && (
+            <span className="rounded-full bg-[#2563EB] px-2 py-0.5 text-xs text-white">
+              Activos
+            </span>
+          )}
+        </summary>
+        <div className="border-t border-slate-700 p-4">{filterControls}</div>
+      </details>
+      <div className="hidden lg:block">{filterControls}</div>
     </aside>
   );
 }

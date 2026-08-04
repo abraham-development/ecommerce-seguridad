@@ -25,12 +25,13 @@ export default function ProductSort() {
   const sortBy = searchParams.get("sortBy") ?? "";
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-sm text-slate-400">Ordenar por:</span>
+    <div className="flex w-full items-center gap-2 sm:w-auto">
+      <span className="hidden text-sm text-slate-400 min-[420px]:inline">Ordenar por:</span>
       <select
         value={sortBy}
         onChange={(e) => updateSort(e.target.value)}
-        className="bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2563EB] cursor-pointer"
+        aria-label="Ordenar productos"
+        className="min-h-10 w-full cursor-pointer rounded-lg border border-slate-700 bg-[#1E293B] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2563EB] sm:w-auto"
       >
         <option value="">Relevancia</option>
         <option value="price_asc">Precio: menor a mayor</option>

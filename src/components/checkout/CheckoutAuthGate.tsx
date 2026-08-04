@@ -24,22 +24,22 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
     <div className="min-h-screen bg-[#0F172A]">
       {/* Top progress bar */}
       <div className="border-b border-slate-800 bg-[#1E293B]/50">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-5xl mx-auto flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-6 w-6 text-[#2563EB]" />
             <span className="font-bold text-white">AFCR Seguridad</span>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
+          <div className="flex w-full items-center justify-between gap-1 text-[11px] text-slate-400 sm:w-auto sm:justify-start sm:gap-2 sm:text-xs">
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-full bg-[#2563EB] text-white flex items-center justify-center font-bold text-xs">1</span>
               <span className="font-medium text-white">Cuenta</span>
             </div>
-            <div className="w-8 h-px bg-slate-700" />
+            <div className="h-px min-w-3 flex-1 bg-slate-700 sm:w-8 sm:flex-none" />
             <div className="flex items-center gap-1.5 opacity-40">
               <span className="w-5 h-5 rounded-full border border-slate-600 text-slate-500 flex items-center justify-center font-bold text-xs">2</span>
               <span>Datos</span>
             </div>
-            <div className="w-8 h-px bg-slate-700" />
+            <div className="h-px min-w-3 flex-1 bg-slate-700 sm:w-8 sm:flex-none" />
             <div className="flex items-center gap-1.5 opacity-40">
               <span className="w-5 h-5 rounded-full border border-slate-600 text-slate-500 flex items-center justify-center font-bold text-xs">3</span>
               <span>Pago</span>
@@ -48,8 +48,8 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-10 items-start">
+      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-10">
+        <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-10">
 
           {/* Auth form */}
           <div>
@@ -63,10 +63,10 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
             </div>
 
             {/* Tabs */}
-            <div className="flex bg-[#1E293B] rounded-xl p-1 mb-6 border border-slate-700">
+            <div className="mb-6 flex rounded-xl border border-slate-700 bg-[#1E293B] p-1">
               <button
                 onClick={() => setTab("login")}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`min-h-11 flex-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200 min-[420px]:text-sm ${
                   tab === "login"
                     ? "bg-[#2563EB] text-white shadow-lg"
                     : "text-slate-400 hover:text-white"
@@ -76,7 +76,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
               </button>
               <button
                 onClick={() => setTab("registro")}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                className={`min-h-11 flex-1 rounded-lg px-2 py-2.5 text-xs font-medium transition-all duration-200 min-[420px]:text-sm ${
                   tab === "registro"
                     ? "bg-[#2563EB] text-white shadow-lg"
                     : "text-slate-400 hover:text-white"
@@ -86,7 +86,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
               </button>
             </div>
 
-            <div className="bg-[#1E293B] rounded-2xl p-7 border border-slate-700">
+            <div className="rounded-2xl border border-slate-700 bg-[#1E293B] p-4 sm:p-7">
               {tab === "login" ? (
                 <LoginForm
                   onSuccess={onSuccess}
@@ -118,7 +118,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
           {/* Order summary */}
           <div className="lg:sticky lg:top-8">
             <div className="bg-[#1E293B] rounded-2xl border border-slate-700 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-700 flex items-center gap-2">
+              <div className="flex items-center gap-2 border-b border-slate-700 px-4 py-4 sm:px-6">
                 <ShoppingBag className="h-4 w-4 text-slate-400" />
                 <h2 className="font-semibold text-white text-sm">
                   Tu pedido
@@ -130,7 +130,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
 
               <ul className="divide-y divide-slate-800">
                 {items.map((item) => (
-                  <li key={item.product.id} className="px-6 py-3.5 flex items-center justify-between gap-3">
+                  <li key={item.product.id} className="flex items-center justify-between gap-3 px-4 py-3.5 sm:px-6">
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#2563EB]/20 text-[#2563EB] text-xs font-bold flex items-center justify-center">
                         {item.quantity}
@@ -151,7 +151,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
                 ))}
               </ul>
 
-              <div className="px-6 py-4 space-y-2.5 border-t border-slate-700 bg-[#0F172A]/40">
+              <div className="space-y-2.5 border-t border-slate-700 bg-[#0F172A]/40 px-4 py-4 sm:px-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-400">Subtotal</span>
                   <span className="text-white">{formatPrice(total)}</span>
@@ -166,7 +166,7 @@ export default function CheckoutAuthGate({ onSuccess }: Props) {
                 </div>
               </div>
 
-              <div className="px-6 py-3.5 border-t border-slate-700 flex items-center gap-2">
+              <div className="flex items-center gap-2 border-t border-slate-700 px-4 py-3.5 sm:px-6">
                 <Shield className="h-4 w-4 text-[#2563EB] flex-shrink-0" />
                 <p className="text-xs text-slate-500">
                   Pago 100% seguro con cifrado SSL

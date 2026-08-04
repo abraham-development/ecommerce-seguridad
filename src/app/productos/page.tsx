@@ -46,34 +46,34 @@ export default async function ProductosPage({ searchParams }: PageProps) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="flex justify-between items-center gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="break-words text-2xl font-bold text-white">
             {params.search ? `Resultados para "${params.search}"` : "Catálogo de productos"}
           </h1>
           <p className="text-slate-400 text-sm mt-1">
             {count} producto{count !== 1 ? "s" : ""} encontrado{count !== 1 ? "s" : ""}
           </p>
         </div>
-        <div>
+        <div className="w-full sm:w-auto">
           <Suspense fallback={<div className="h-10 w-48 bg-[#1E293B] animate-pulse rounded-lg" />}>
             <ProductSort />
           </Suspense>
         </div>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
         <Suspense>
           <FilterSidebar categories={categories} brands={brands} />
         </Suspense>
 
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <ProductGrid products={products} />
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-10">
+            <div className="mt-10 flex max-w-full items-center justify-start gap-2 overflow-x-auto pb-2 sm:justify-center">
               {currentPage > 1 && (
                 <Link
                   href={buildPageUrl(currentPage - 1)}

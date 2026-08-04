@@ -43,12 +43,12 @@ export default function CartDrawer() {
       {/* Drawer */}
       <div
         ref={drawerRef}
-        className={`fixed top-0 right-0 z-50 h-full w-full max-w-md bg-[#1E293B] shadow-2xl transition-transform duration-300 ease-in-out flex flex-col ${
+        className={`fixed top-0 right-0 z-50 flex h-[100dvh] w-full max-w-md flex-col bg-[#1E293B] shadow-2xl transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+        <div className="flex items-center justify-between border-b border-slate-700 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-[#2563EB]" />
             <h2 className="text-lg font-semibold text-white">Carrito</h2>
@@ -67,7 +67,7 @@ export default function CartDrawer() {
         </div>
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto py-4 px-6">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
               <ShoppingCart className="h-16 w-16 text-slate-600" />
@@ -92,7 +92,7 @@ export default function CartDrawer() {
 
         {/* Footer */}
         {items.length > 0 && (
-          <div className="border-t border-slate-700 px-6 py-4 space-y-4">
+          <div className="space-y-4 border-t border-slate-700 px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
             <div className="flex items-center justify-between">
               <span className="text-slate-400">Subtotal</span>
               <span className="text-white font-semibold text-lg">

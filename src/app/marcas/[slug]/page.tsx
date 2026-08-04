@@ -22,9 +22,9 @@ export default async function BrandPage({ params }: PageProps) {
   const products = await getProductsByBrandSlug(slug);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">
+        <h1 className="break-words text-2xl font-bold text-white sm:text-3xl">
           {brand?.name ?? slug}
         </h1>
         {brand?.description && (

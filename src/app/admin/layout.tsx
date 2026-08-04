@@ -34,7 +34,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-64px)]">
+    <div className="flex min-w-0 min-h-[calc(100vh-64px)]">
       {/* Sidebar */}
       <aside className="w-60 bg-[#1E293B] border-r border-slate-700 flex-shrink-0 hidden lg:flex flex-col">
         <div className="p-4 border-b border-slate-700">
@@ -73,7 +73,32 @@ export default async function AdminLayout({
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-auto p-6">{children}</main>
+      <main className="min-w-0 flex-1 overflow-x-hidden p-4 sm:p-6">
+        <div className="mb-6 lg:hidden">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-[#2563EB]" />
+              <span className="text-sm font-semibold text-white">Panel Admin</span>
+            </div>
+            <Link href="/" className="text-xs text-slate-400 hover:text-white">
+              Volver a la tienda
+            </Link>
+          </div>
+          <nav className="-mx-4 flex gap-2 overflow-x-auto border-y border-slate-700 bg-[#1E293B] px-4 py-2 sm:-mx-6 sm:px-6">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex min-h-10 flex-shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white"
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+        {children}
+      </main>
     </div>
   );
 }

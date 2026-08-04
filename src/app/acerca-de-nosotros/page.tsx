@@ -4,7 +4,7 @@ import {
   Shield,
   Award,
   Users,
-  Phone,
+  Smartphone,
   Mail,
   MapPin,
   CheckCircle,
@@ -32,7 +32,7 @@ export default function AcercaDeNosotrosPage() {
                   AFCR Seguridad
                 </span>
               </div>
-              <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight mb-6">
+              <h1 className="mb-6 text-3xl font-bold leading-tight text-white min-[420px]:text-4xl sm:text-5xl">
                 Protegiendo lo que más{" "}
                 <span className="text-[#2563EB]">te importa</span>
               </h1>
@@ -71,8 +71,8 @@ export default function AcercaDeNosotrosPage() {
       </section>
 
       {/* Quiénes somos */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-12">
           <div>
             <h2 className="text-3xl font-bold text-white mb-6">
               ¿Quiénes somos?
@@ -116,7 +116,7 @@ export default function AcercaDeNosotrosPage() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
             {[
               { value: "10+", label: "Años de experiencia", icon: "🏆" },
               { value: "5,000+", label: "Clientes satisfechos", icon: "👥" },
@@ -137,12 +137,12 @@ export default function AcercaDeNosotrosPage() {
       </section>
 
       {/* Valores */}
-      <section className="bg-[#1E293B] border-y border-slate-700/50 py-16">
+      <section className="border-y border-slate-700/50 bg-[#1E293B] py-12 sm:py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-white text-center mb-12">
             Nuestros valores
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {[
               {
                 icon: <Award className="h-8 w-8 text-[#2563EB]" />,
@@ -162,7 +162,7 @@ export default function AcercaDeNosotrosPage() {
             ].map((val) => (
               <div
                 key={val.title}
-                className="bg-[#0F172A] rounded-2xl p-8 border border-slate-700/50"
+                className="rounded-2xl border border-slate-700/50 bg-[#0F172A] p-6 sm:p-8"
               >
                 <div className="mb-4">{val.icon}</div>
                 <h3 className="text-xl font-bold text-white mb-3">{val.title}</h3>
@@ -174,7 +174,7 @@ export default function AcercaDeNosotrosPage() {
       </section>
 
       {/* Contacto */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <section className="max-w-4xl mx-auto px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <h2 className="text-3xl font-bold text-white text-center mb-4">
           ¿Tenés alguna consulta?
         </h2>
@@ -182,11 +182,11 @@ export default function AcercaDeNosotrosPage() {
           Nuestro equipo está listo para asesorarte sin compromiso.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {[
             {
-              icon: <Phone className="h-6 w-6 text-[#2563EB]" />,
-              label: "Teléfono",
+              icon: <Smartphone className="h-6 w-6 text-[#2563EB]" />,
+              label: "Celular",
               value: "+54 11 0000-0000",
               href: "tel:+541100000000",
             },

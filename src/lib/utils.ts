@@ -30,6 +30,13 @@ export function truncate(str: string, length: number): string {
   return str.slice(0, length) + "...";
 }
 
+export function formatPersonName(
+  names: string | null | undefined,
+  surnames: string | null | undefined
+): string {
+  return [names?.trim(), surnames?.trim()].filter(Boolean).join(" ");
+}
+
 export function getOrderStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     pending: "Pendiente",
