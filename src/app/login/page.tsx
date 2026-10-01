@@ -13,6 +13,7 @@ import {
   USER_DASHBOARD_PATH,
 } from "@/lib/auth-routing";
 import toast from "react-hot-toast";
+import { getAuthErrorMessage } from "@/lib/supabase/fetch";
 
 const loginErrors: Record<string, string> = {
   session_required: "Necesitás iniciar sesión para acceder al panel admin.",
@@ -49,7 +50,7 @@ export default function LoginPage() {
           ? "Confirmá tu correo con el código que te enviamos."
           : error.message === "Invalid login credentials"
             ? "Credenciales incorrectas"
-            : error.message
+            : getAuthErrorMessage(error, error.message)
       );
       setLoading(false);
       return;
@@ -72,7 +73,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(getAuthErrorMessage(error, error.message));
     }
   };
 

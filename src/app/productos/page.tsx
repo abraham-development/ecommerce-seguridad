@@ -1,5 +1,5 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import FilterSidebar from "@/components/filters/FilterSidebar";
 import ProductSort from "@/components/filters/ProductSort";
 import ProductGrid from "@/components/products/ProductGrid";
@@ -19,6 +19,7 @@ interface PageProps {
 }
 
 export default async function ProductosPage({ searchParams }: PageProps) {
+  await connection();
   const params = await searchParams;
   const filters: ProductFilters = {
     search: params.search,
@@ -57,16 +58,12 @@ export default async function ProductosPage({ searchParams }: PageProps) {
           </p>
         </div>
         <div className="w-full sm:w-auto">
-          <Suspense fallback={<div className="h-10 w-48 bg-[#1E293B] animate-pulse rounded-lg" />}>
-            <ProductSort />
-          </Suspense>
+          <ProductSort />
         </div>
       </div>
 
       <div className="flex flex-col gap-6 lg:flex-row lg:gap-8">
-        <Suspense>
-          <FilterSidebar categories={categories} brands={brands} />
-        </Suspense>
+        <FilterSidebar categories={categories} brands={brands} />
 
         <div className="min-w-0 flex-1">
           <ProductGrid products={products} />

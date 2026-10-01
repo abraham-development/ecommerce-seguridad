@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getSupabaseAuthCookieName } from "@/lib/supabase/env";
+import { supabaseFetch } from "@/lib/supabase/fetch";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -16,6 +18,7 @@ export async function updateSession(request: NextRequest) {
     supabaseUrl,
     supabasePublishableKey,
     {
+      cookieOptions: { name: getSupabaseAuthCookieName() },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -30,8 +33,17 @@ export async function updateSession(request: NextRequest) {
           );
         },
       },
+      global: { fetch: supabaseFetch },
     }
   );
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    return { supabaseResponse, user: null, supabase };
+  }
 
   const {
     data: { user },

@@ -13,6 +13,7 @@ import {
   MIN_PASSWORD_LENGTH,
   normalizeEmail,
 } from "@/lib/auth-email";
+import { getAuthErrorMessage } from "@/lib/supabase/fetch";
 
 interface RegisterFormProps {
   onSuccess: (user: SupabaseUser) => void;
@@ -58,7 +59,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       },
     });
     if (error) {
-      toast.error(error.message);
+      toast.error(getAuthErrorMessage(error, error.message));
       setLoading(false);
       return;
     }

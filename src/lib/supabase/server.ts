@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
+import {
+  getSupabaseAuthCookieName,
+  getSupabasePublishableKey,
+  getSupabaseUrl,
+} from "@/lib/supabase/env";
+import { supabaseFetch } from "@/lib/supabase/fetch";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -9,6 +14,7 @@ export async function createClient() {
     getSupabaseUrl(),
     getSupabasePublishableKey(),
     {
+      cookieOptions: { name: getSupabaseAuthCookieName() },
       cookies: {
         getAll() {
           return cookieStore.getAll();
@@ -23,6 +29,7 @@ export async function createClient() {
           }
         },
       },
+      global: { fetch: supabaseFetch },
     }
   );
 }

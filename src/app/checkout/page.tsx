@@ -16,8 +16,11 @@ export default function CheckoutPage() {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
         const {
-          data: { user },
-        } = await supabase.auth.getUser();
+          data: { session },
+        } = await supabase.auth.getSession();
+        const user = session
+          ? (await supabase.auth.getUser()).data.user
+          : null;
         setUser(user);
       } catch {
         // Supabase no disponible en modo mockup

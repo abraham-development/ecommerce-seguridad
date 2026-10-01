@@ -8,6 +8,7 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { getAuthErrorMessage } from "@/lib/supabase/fetch";
 
 interface LoginFormProps {
   onSuccess: (user: SupabaseUser) => void;
@@ -32,7 +33,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
           ? "Confirmá tu correo con el código que te enviamos."
           : error.message === "Invalid login credentials"
           ? "Credenciales incorrectas"
-          : error.message
+          : getAuthErrorMessage(error, error.message)
       );
       setLoading(false);
       return;

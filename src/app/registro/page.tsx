@@ -14,6 +14,7 @@ import {
 } from "@/lib/auth-email";
 import { getLocalSafeOrigin } from "@/lib/auth-routing";
 import toast from "react-hot-toast";
+import { getAuthErrorMessage } from "@/lib/supabase/fetch";
 
 export default function RegistroPage() {
   const router = useRouter();
@@ -59,7 +60,7 @@ export default function RegistroPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(getAuthErrorMessage(error, error.message));
       setLoading(false);
       return;
     }
@@ -91,7 +92,7 @@ export default function RegistroPage() {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error(getAuthErrorMessage(error, error.message));
       setGoogleLoading(false);
     }
   };

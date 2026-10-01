@@ -1,13 +1,65 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import type { Category, Brand } from "@/types";
 
 interface FilterSidebarProps {
   categories: Category[];
   brands: Brand[];
+}
+
+interface PriceRangeFormProps {
+  initialMinPrice: string;
+  initialMaxPrice: string;
+  onApply: (minPrice: string, maxPrice: string) => void;
+}
+
+function PriceRangeForm({
+  initialMinPrice,
+  initialMaxPrice,
+  onApply,
+}: PriceRangeFormProps) {
+  const [minPrice, setMinPrice] = useState(initialMinPrice);
+  const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        onApply(minPrice, maxPrice);
+      }}
+    >
+      <h3 className="text-sm font-medium text-slate-300 mb-3">
+        Rango de precio
+      </h3>
+      <div className="space-y-2">
+        <input
+          type="number"
+          min="0"
+          placeholder="Mínimo"
+          value={minPrice}
+          onChange={(event) => setMinPrice(event.target.value)}
+          className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+        />
+        <input
+          type="number"
+          min="0"
+          placeholder="Máximo"
+          value={maxPrice}
+          onChange={(event) => setMaxPrice(event.target.value)}
+          className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+        />
+        <button
+          type="submit"
+          className="min-h-10 w-full rounded-lg bg-[#2563EB] px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+        >
+          Aplicar precio
+        </button>
+      </div>
+    </form>
+  );
 }
 
 export default function FilterSidebar({
@@ -17,20 +69,8 @@ export default function FilterSidebar({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  const updateFilter = useCallback(
-    (key: string, value: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-      params.delete("page");
-      router.push(`${pathname}?${params.toString()}`);
-    },
-    [router, pathname, searchParams]
-  );
+  const currentMinPrice = searchParams.get("minPrice") ?? "";
+  const currentMaxPrice = searchParams.get("maxPrice") ?? "";
 
   const toggleMulti = useCallback(
     (key: string, value: string) => {
@@ -48,25 +88,37 @@ export default function FilterSidebar({
         params.delete(key);
       }
       params.delete("page");
-      router.push(`${pathname}?${params.toString()}`);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [router, pathname, searchParams]
   );
 
   const selectedCategories = searchParams.get("category")?.split(",").filter(Boolean) ?? [];
   const selectedBrands = searchParams.get("brand")?.split(",").filter(Boolean) ?? [];
-  const minPrice = searchParams.get("minPrice") ?? "";
-  const maxPrice = searchParams.get("maxPrice") ?? "";
+
+  const applyPriceRange = (minPrice: string, maxPrice: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (minPrice) params.set("minPrice", minPrice);
+    else params.delete("minPrice");
+
+    if (maxPrice) params.set("maxPrice", maxPrice);
+    else params.delete("maxPrice");
+
+    params.delete("page");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const clearAll = () => {
-    router.push(pathname);
+    router.replace(pathname, { scroll: false });
   };
 
   const hasFilters =
     selectedCategories.length > 0 ||
     selectedBrands.length > 0 ||
-    minPrice ||
-    maxPrice;
+    currentMinPrice ||
+    currentMaxPrice;
 
   const filterControls = (
     <div className="space-y-6">
@@ -130,27 +182,12 @@ export default function FilterSidebar({
       )}
 
       {/* Price range */}
-      <div>
-        <h3 className="text-sm font-medium text-slate-300 mb-3">
-          Rango de precio
-        </h3>
-        <div className="space-y-2">
-          <input
-            type="number"
-            placeholder="Mínimo"
-            value={minPrice}
-            onChange={(e) => updateFilter("minPrice", e.target.value || null)}
-            className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-          />
-          <input
-            type="number"
-            placeholder="Máximo"
-            value={maxPrice}
-            onChange={(e) => updateFilter("maxPrice", e.target.value || null)}
-            className="w-full bg-[#1E293B] border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-          />
-        </div>
-      </div>
+      <PriceRangeForm
+        key={`${currentMinPrice}:${currentMaxPrice}`}
+        initialMinPrice={currentMinPrice}
+        initialMaxPrice={currentMaxPrice}
+        onApply={applyPriceRange}
+      />
     </div>
   );
 

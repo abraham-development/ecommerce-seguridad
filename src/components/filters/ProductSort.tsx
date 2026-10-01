@@ -17,7 +17,10 @@ export default function ProductSort() {
         params.delete("sortBy");
       }
       params.delete("page");
-      router.push(`${pathname}?${params.toString()}`);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
     },
     [router, pathname, searchParams]
   );

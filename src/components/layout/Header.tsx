@@ -70,9 +70,15 @@ export default function Header() {
           setIsAdmin(isAdminAccount(profile?.role, nextUser.email));
         };
 
-        // Initial check
-        const { data: { user } } = await supabase.auth.getUser();
-        await syncAccountState(user);
+        // Avoid a network request for anonymous visitors. When a local session
+        // exists, getUser still validates it against the Auth server.
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const initialUser = session
+          ? (await supabase.auth.getUser()).data.user
+          : null;
+        await syncAccountState(initialUser);
         if (!active) return;
         setAuthChecked(true);
 

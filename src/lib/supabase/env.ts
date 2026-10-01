@@ -21,3 +21,14 @@ export function getSupabasePublishableKey(): string {
 
   return publishableKey;
 }
+
+export function getSupabaseAuthCookieName(): string {
+  const hostname = new URL(getSupabaseUrl()).hostname;
+  const projectRef = hostname.split(".")[0]?.replace(/[^a-zA-Z0-9-]/g, "");
+
+  if (!projectRef) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL must contain a valid project host");
+  }
+
+  return `afcr-${projectRef}-auth-v2`;
+}

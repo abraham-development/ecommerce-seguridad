@@ -1,4 +1,8 @@
 import type { AuthError } from "@supabase/supabase-js";
+import {
+  getAuthErrorMessage,
+  isSupabaseNetworkError,
+} from "@/lib/supabase/fetch";
 
 export const MIN_PASSWORD_LENGTH = 8;
 export const OTP_LENGTH = 8;
@@ -27,6 +31,8 @@ export function getRemainingCooldown(sentAt: number): number {
 }
 
 export function getOtpErrorMessage(error: AuthError): string {
+  if (isSupabaseNetworkError(error)) return getAuthErrorMessage(error);
+
   switch (error.code) {
     case "otp_expired":
       return "El código venció o no es válido. Solicitá uno nuevo.";
@@ -39,6 +45,8 @@ export function getOtpErrorMessage(error: AuthError): string {
 }
 
 export function getEmailSendErrorMessage(error: AuthError): string {
+  if (isSupabaseNetworkError(error)) return getAuthErrorMessage(error);
+
   switch (error.code) {
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
@@ -51,6 +59,8 @@ export function getEmailSendErrorMessage(error: AuthError): string {
 }
 
 export function getPasswordErrorMessage(error: AuthError): string {
+  if (isSupabaseNetworkError(error)) return getAuthErrorMessage(error);
+
   switch (error.code) {
     case "weak_password":
       return `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`;
