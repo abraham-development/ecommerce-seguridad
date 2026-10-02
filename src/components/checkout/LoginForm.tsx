@@ -68,7 +68,7 @@ export default function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormPr
       />
       <div className="flex flex-col items-end justify-between gap-1 min-[380px]:flex-row min-[380px]:items-center">
         <Link
-          href="/verificar-email?next=/checkout"
+          href="/verificar?codigo=1&next=/checkout"
           className="inline-flex min-h-10 items-center px-1 text-sm font-medium text-slate-400 hover:text-white"
         >
           Ya tengo un código

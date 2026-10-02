@@ -16,7 +16,7 @@ import {
   getRemainingCooldown,
   MIN_PASSWORD_LENGTH,
   normalizeEmail,
-  OTP_EXPIRY_MINUTES,
+  formatOtpExpiry,
   OTP_LENGTH,
   OTP_RESEND_SECONDS,
 } from "@/lib/auth-email";
@@ -198,7 +198,7 @@ export default function RecuperarContrasenaPage() {
           <p className="mt-2 text-sm text-slate-400">
             {step === "email" && "Te enviaremos un código para validar tu identidad."}
             {step === "otp" &&
-              `Ingresá el código recibido. Vence en ${OTP_EXPIRY_MINUTES} minutos.`}
+              `Ingresá el código recibido. Vence en ${formatOtpExpiry()}.`}
             {step === "password" && "Creá una contraseña nueva para tu cuenta."}
           </p>
         </div>

@@ -6,8 +6,17 @@ import {
 
 export const MIN_PASSWORD_LENGTH = 8;
 export const OTP_LENGTH = 8;
-export const OTP_EXPIRY_MINUTES = 10;
+export const OTP_EXPIRY_MINUTES = 60;
 export const OTP_RESEND_SECONDS = 60;
+
+export function formatOtpExpiry(): string {
+  if (OTP_EXPIRY_MINUTES % 60 === 0) {
+    const hours = OTP_EXPIRY_MINUTES / 60;
+    return hours === 1 ? "1 hora" : `${hours} horas`;
+  }
+
+  return `${OTP_EXPIRY_MINUTES} minutos`;
+}
 
 export const AUTH_STORAGE_KEYS = {
   pendingVerificationEmail: "afcr-pending-verification-email",

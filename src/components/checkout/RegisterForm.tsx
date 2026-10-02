@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Lock, Mail, Smartphone, User } from "lucide-react";
+import { ArrowRight, Lock, Mail, User } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -25,7 +25,6 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
   const [form, setForm] = useState({
     names: "",
     surnames: "",
-    mobile: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -54,7 +53,6 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
         data: {
           names: form.names,
           surnames: form.surnames,
-          mobile: form.mobile,
         },
       },
     });
@@ -76,7 +74,7 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
       String(Date.now())
     );
     toast.success("Te enviamos un código para confirmar tu correo.");
-    router.push("/verificar-email?next=/checkout");
+    router.push("/verificar?next=/checkout");
   };
 
   return (
@@ -105,17 +103,6 @@ export default function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFor
           required
         />
       </div>
-      <Input
-        label="Celular"
-        type="tel"
-        id="reg-mobile"
-        value={form.mobile}
-        onChange={(e) => setForm({ ...form, mobile: e.target.value })}
-        leftIcon={<Smartphone className="h-4 w-4" />}
-        placeholder="+51 999 999 999"
-        autoComplete="tel"
-        required
-      />
       <Input
         label="Email"
         type="email"
