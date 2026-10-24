@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, MailCheck, RotateCw, Shield } from "lucide-react";
@@ -22,43 +22,67 @@ import {
 import { getSafeRedirectPath, USER_DASHBOARD_PATH } from "@/lib/auth-routing";
 import { createClient } from "@/lib/supabase/client";
 
+function subscribeToNothing(): () => void {
+  return () => {};
+}
+
+function readPendingVerification(): {
+  pendingEmail: string | null;
+  sentAt: number;
+} {
+  return {
+    pendingEmail: sessionStorage.getItem(
+      AUTH_STORAGE_KEYS.pendingVerificationEmail
+    ),
+    sentAt: Number(
+      sessionStorage.getItem(AUTH_STORAGE_KEYS.verificationSentAt) ?? 0
+    ),
+  };
+}
+
+function LoadingState() {
+  return (
+    <div className="flex min-h-[60vh] items-center justify-center">
+      <Spinner />
+    </div>
+  );
+}
+
 export default function VerificarPage() {
+  // sessionStorage solo existe en el browser: esperar a la hidratacion.
+  const hydrated = useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false
+  );
+
+  if (!hydrated) return <LoadingState />;
+
+  return <VerificarForm />;
+}
+
+function VerificarForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedPath = getSafeRedirectPath(searchParams.get("next"));
   const nextPath = requestedPath ?? USER_DASHBOARD_PATH;
-
-  const [email, setEmail] = useState("");
-  const [emailLocked, setEmailLocked] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [ready, setReady] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
-
   const allowManualEmail = searchParams.get("codigo") === "1";
 
+  const [initial] = useState(readPendingVerification);
+  const emailLocked = Boolean(initial.pendingEmail);
+  const mustRedirect = !initial.pendingEmail && !allowManualEmail;
+
+  const [email, setEmail] = useState(initial.pendingEmail ?? "");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [cooldown, setCooldown] = useState(() =>
+    initial.sentAt ? getRemainingCooldown(initial.sentAt) : 0
+  );
+
   useEffect(() => {
-    const pendingEmail = sessionStorage.getItem(
-      AUTH_STORAGE_KEYS.pendingVerificationEmail
-    );
-
-    if (!pendingEmail && !allowManualEmail) {
-      router.replace("/registro");
-      return;
-    }
-
-    const sentAt = Number(
-      sessionStorage.getItem(AUTH_STORAGE_KEYS.verificationSentAt) ?? 0
-    );
-
-    if (pendingEmail) {
-      setEmail(pendingEmail);
-      setEmailLocked(true);
-    }
-    if (sentAt) setCooldown(getRemainingCooldown(sentAt));
-    setReady(true);
-  }, [allowManualEmail, router]);
+    if (mustRedirect) router.replace("/registro");
+  }, [mustRedirect, router]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -142,13 +166,7 @@ export default function VerificarPage() {
     toast.success("Te enviamos un código nuevo.");
   };
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Spinner />
-      </div>
-    );
-  }
+  if (mustRedirect) return <LoadingState />;
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4 py-10">

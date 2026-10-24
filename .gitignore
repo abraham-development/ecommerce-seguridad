@@ -47,3 +47,4 @@ next-env.d.ts
 /.mcp.json
 
 recursos_imagenes
+.chrome-debug-profile/
